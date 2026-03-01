@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "Output EEPROM",
+			"path": "output-eeprom"
+		},
+		{
+			"name": "Shared",
+			"path": "shared"
+		}
+	],
+	"settings": {},
+	"extensions": {
+		"recommendations": [
+			"platformio.platformio-ide"
+		],
+		"unwantedRecommendations": [
+			"ms-vscode.cpptools-extension-pack"
+		]
+	}
+}

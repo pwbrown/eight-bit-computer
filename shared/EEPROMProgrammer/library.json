@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+  "name": "EEPROMProgrammer",
+  "version": "1.0.0",
+  "description": "Library for interacting with the custom built arduino EEPROM programmer",
+  "frameworks": [
+    "arduino"
+  ],
+  "plaforms": [
+    "atmelavr"
+  ]
+}
