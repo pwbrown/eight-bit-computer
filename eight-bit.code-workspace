@@ -5,6 +5,10 @@
 			"path": "output-eeprom"
 		},
 		{
+			"name": "Control EEPROM",
+			"path": "control-eeprom"
+		},
+		{
 			"name": "Shared",
 			"path": "shared"
 		}

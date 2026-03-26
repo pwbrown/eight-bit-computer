@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+  "name": "InstructionSet",
+  "version": "1.0.0",
+  "description": "Library for defining the instruction set of the 8-bit computer. Used by both the control logic and the compiler",
+  "frameworks": [
+    "arduino"
+  ],
+  "plaforms": [
+    "atmelavr"
+  ]
+}
