@@ -16,29 +16,19 @@ void setup() {
   // Setup all EEPROM pins
   setupEEPROMPins();
 
-  // Erase the EEPROM to ensure extraneous commands do nothing (no active control signals)
-  Serial.print("Erasing EEPROM");
-  for (int addr = 0; addr < 2048; addr += 1) {
-    if (addr % 16 == 0) {
-      Serial.print(".");
-    }
-    writeEEPROMByte(addr, 0);
-  }
-  Serial.println();
-
   // Determine instruction position for each of the jump instructions
   int JMP, JOC, JNC, JOZ, JNZ = 0;
   for (int i = 0; i < 16; i += 1) {
     char* id = INSTRUCTIONS[i].id;
-    if (strcmp(id, "JMP") == 1) {
+    if (strcmp(id, "JMP") == 0) {
       JMP = i;
-    } else if (strcmp(id, "JOC") == 1) {
+    } else if (strcmp(id, "JOC") == 0) {
       JOC = i;
-    } else if (strcmp(id, "JNC") == 1) {
+    } else if (strcmp(id, "JNC") == 0) {
       JNC = i;
-    } else if (strcmp(id, "JOZ") == 1) {
+    } else if (strcmp(id, "JOZ") == 0) {
       JOZ = i;
-    } else if (strcmp(id, "JNZ") == 1) {
+    } else if (strcmp(id, "JNZ") == 0) {
       JNZ = i;
     }
   }
@@ -95,7 +85,9 @@ void setup() {
   }
   Serial.println();
 
-  printEEPROMContentsToSerial();
+  delay(1000);
+
+  printEEPROMContentsToSerial(1024);
 }
 
 void loop() {
