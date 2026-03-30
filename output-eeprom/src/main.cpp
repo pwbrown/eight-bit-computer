@@ -42,7 +42,7 @@ const int SEGMENT_STATES[16][8] = {
 };
 
 // The order of the segment state values in order of LSB to MSB for each address of the EEPROM
-const int SEGMENT_OUTPUT_ORDER[8] = {E, D, C, DP, B, A, F, G};
+const int SEGMENT_OUTPUT_ORDER[8] = {E, D, C, G, B, A, F, DP};
 
 // Indicates if the 7-segment display is common cathode or anode,
 // which determines whether a segment is turned on by setting its pin HIGH or LOW respectively
