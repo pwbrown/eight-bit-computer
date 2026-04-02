@@ -9,8 +9,16 @@
 			"path": "control-eeprom"
 		},
 		{
+			"name": "Bootloader",
+			"path": "bootloader"
+		},
+		{
 			"name": "Shared",
 			"path": "shared"
+		},
+		{
+			"name": "Examples",
+			"path": "examples"
 		}
 	],
 	"settings": {},

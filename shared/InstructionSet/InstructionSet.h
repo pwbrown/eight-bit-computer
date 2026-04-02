@@ -80,18 +80,22 @@ const Instruction INSTRUCTIONS[16] = {
     {"JNZ", true, {0, 0, 0}},
     // 1100: Display: Displays a value from the given memory address on the numeric output display
     {"DSM", true, {IO|MI, RO|OI, 0}},
-    // 1101: Display Immediate: Displays the given value directly on the numeric output display
-    {"DSI", true, {IO|OI, 0, 0}},
-    // 1110: Display A Register: Displays the value in the A Register on the numeric output display
-    {"DSA", false, {AO|OI, 0, 0}},
+    // 1101: Double A Store: Doubles the A Register value and stores the result in memory at the given address
+    {"DAS", true, {IO|MI, AO|BI, EO|FI|RI}},
+    // 1110: Double Memory Store: Doubles the value in memory at the given address and stores the result back to the same address
+    {"DMS", true, {IO|MI, RO|AI|BI, EO|FI|RI}},
     // 1111: Halt: Stops the clock to halt the computer program
     {"HLT", false, {HLT, 0, 0}},
 };
 
 // List of additional instructions that can replace base instructions if the need arises.
 const Instruction MISC_INSTRUCTIONS[] = {
-    // Shift Left: Shifts the A Register value to the left by one bit by adding the A Register value to itself
-    {"SHL", false, {AO|BI, EO|AI, 0}},
+    // Display Immediate: Displays the given value directly on the numeric output display
+    {"DSI", true, {IO|OI, 0, 0}},
+    // Display A Register: Displays the value in the A Register on the numeric output display
+    {"DSA", false, {AO|OI, 0, 0}},
+    // Clear: Sets a value in memory at the given address to 0
+    {"CLR", true, {IO|MI, RI, 0}},
     // Negate: Negates the value in the A Register by subtracting the A Register value from 0
     {"NEG", false, {AO|BI, AI, EO|SU|AI}},
 };
