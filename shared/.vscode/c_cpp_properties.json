@@ -1,13 +1,10 @@
-//
-// !!! WARNING !!! AUTO-GENERATED FILE!
-// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
-// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
-//
 {
     "configurations": [
         {
             "name": "PlatformIO",
             "includePath": [
+                "/Users/philipbrown/projects/eight-bit-computer/shared/InstructionSet",
+                "/Users/philipbrown/projects/eight-bit-computer/shared/Assembler",
                 "/Users/philipbrown/.platformio/packages/framework-arduino-avr/cores/arduino",
                 "/Users/philipbrown/.platformio/packages/framework-arduino-avr/variants/eightanaloginputs",
                 "/Users/philipbrown/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
@@ -15,7 +12,8 @@
                 "/Users/philipbrown/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
                 "/Users/philipbrown/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
                 "/Users/philipbrown/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
-                ""
+                "",
+                "/Users/philipbrown/projects/eight-bit-computer/bootloader/.pio/libdeps/nanoatmega328/Adafruit GFX Library"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,

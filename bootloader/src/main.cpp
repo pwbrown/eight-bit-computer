@@ -1,30 +1,106 @@
 #include <Arduino.h>
+#include "Button.h"
 
-// Pin definitions for all input and output connections
-const int SHIFT_DATA_PIN = 2;  // Entry point to shift register data chain
-const int SHIFT_CLOCK_PIN = 3; // Shared clock pin for all shift registers
-const int SHIFT_LATCH_PIN = 4; // Shared latch pin for all shift registers
-const int DATA_ENABLE_PIN = 5; // Active LOW pin to enable the address and data shift registers
-const int CTRL_ENABLE_PIN = 6; // Active LOW pin to enable the control shift register
-const int CLOCK_MODE_PIN = 7;  // Attached to the clock mode switch to detect if the clock is in astable or monostable mode
-const int RAM_MODE_PIN = 8;    // Attached to the RAM mode switch to detect if the RAM is in run or program mode
-const int BUTTON_1_PIN = 9;   // Button 1 for user input
-const int BUTTON_2_PIN = 10;  // Button 2 for user input
-const int BUTTON_3_PIN = 11;  // Button 3 for user input
-const int BUTTON_4_PIN = 12;  // Button 4 for user input
+#define TL_BUTTON_PIN 11  // Top Left Button
+#define BL_BUTTON_PIN 12  // Bottom Left Button
+#define TR_BUTTON_PIN 8   // Top Right Button
+#define BR_BUTTON_PIN 9   // Bottom Right Button
+#define CLOCK_MODE_PIN 10 // Clock Mode Switch
+#define RAM_MODE_PIN 7    // RAM Mode Switch
 
-// Control Register Bit Definitions
-const byte CONTROL_WORD_ENABLE_BIT         = 1 << 0; // Controls the output enable pins for the computer's control word (EEPROMS)
-const byte MEMORY_ADDR_REGISTER_ENABLE_BIT = 1 << 1; // Controls the output enable pin for the computer's memory address register (RAM)
-const byte MEMORY_WRITE_BIT                = 1 << 2; // Controls the write enable pin for the computer's RAM
-const byte RESET_BUTTON_BIT                = 1 << 3; // Directly controls the reset button for the computer
+// Create button instances for all buttons and switches
+Button topLeftButton(TL_BUTTON_PIN);
+Button bottomLeftButton(BL_BUTTON_PIN);
+Button topRightButton(TR_BUTTON_PIN);
+Button bottomRightButton(BR_BUTTON_PIN);
+Button clockModeSwitch(CLOCK_MODE_PIN);
+Button ramModeSwitch(RAM_MODE_PIN);
 
-// OLED Display will use A4 and A5 for I2C communication and will be powered directly by the arduino
+// Function declarations
+bool isClockModeManual();
+bool isRamModeRun();
+
+// Previous states
+bool prevClockManual = false;
+bool prevRamRun = false;
 
 void setup() {
-  // put your setup code here, to run once:
+  Serial.begin(57600);
+
+  // Initialize all buttons and switches
+  topLeftButton.begin();
+  bottomLeftButton.begin();
+  topRightButton.begin();
+  bottomRightButton.begin();
+  clockModeSwitch.begin();
+  ramModeSwitch.begin();
+
+  // Initialize previous states
+  prevClockManual = isClockModeManual();
+  prevRamRun = isRamModeRun();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // Update all button states
+  Button::State tlButtonState = topLeftButton.update();
+  Button::State blButtonState = bottomLeftButton.update();
+  Button::State trButtonState = topRightButton.update();
+  Button::State brButtonState = bottomRightButton.update();
+
+  // Update and get resolved states for input switches
+  bool isClockManual = isClockModeManual();
+  bool isRamRun = isRamModeRun();
+
+  // Report switch state changes
+  if (isClockManual != prevClockManual) {
+    Serial.print("Clock Mode: ");
+    Serial.println(isClockManual ? "Manual" : "Automatic");
+    prevClockManual = isClockManual;
+  }
+  if (isRamRun != prevRamRun) {
+    Serial.print("RAM Mode: ");
+    Serial.println(isRamRun ? "Run" : "Program");
+    prevRamRun = isRamRun;
+  }
+
+  // Top Left Button
+  if (tlButtonState == Button::State::Pressing) {
+    Serial.println("Top Left Button Was Pressed");
+  }
+  if (tlButtonState == Button::State::Releasing) {
+    Serial.println("Top Left Button Was Released");
+  }
+  // Bottom Left Button
+  if (blButtonState == Button::State::Pressing) {
+    Serial.println("Bottom Left Button Was Pressed");
+  }
+  if (blButtonState == Button::State::Releasing) {
+    Serial.println("Bottom Left Button Was Released");
+  }
+  // Top Right Button
+  if (trButtonState == Button::State::Pressing) {
+    Serial.println("Top Right Button Was Pressed");
+  }
+  if (trButtonState == Button::State::Releasing) {
+    Serial.println("Top Right Button Was Released");
+  }
+  // Bottom Right Button
+  if (brButtonState == Button::State::Pressing) {
+    Serial.println("Bottom Right Button Was Pressed");
+  }
+  if (brButtonState == Button::State::Releasing) {
+    Serial.println("Bottom Right Button Was Released");
+  }
+}
+
+// Checks if the clock is in "manual" mode vs "automatic" mode
+bool isClockModeManual() {
+  Button::State clockState = clockModeSwitch.update();
+  return clockState == Button::Pressed || clockState == Button::Pressing;
+}
+
+// Checks if the ram is in "run" mode vs "program" mode
+bool isRamModeRun() {
+  Button::State ramState = ramModeSwitch.update();
+  return ramState == Button::Pressed || ramState == Button::Pressing;
 }

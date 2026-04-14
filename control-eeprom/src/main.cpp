@@ -33,52 +33,56 @@ void setup() {
     }
   }
 
-  // Write the instructions to the EEPROM (only covers the first 1024 bytes since last address bit is unused)
+  // Write the instructions to the EEPROM
   Serial.print("Programming EEPROM");
-  for (int addr = 0; addr < 1024; addr += 1) {
+  for (int addr = 0; addr < 2048; addr += 1) {
     if (addr % 16 == 0) {
       Serial.print(".");
     }
 
     // Get bit values from the address
-    int carryFlag   = (addr & 0b1000000000) >> 9;
-    int zeroFlag    = (addr & 0b0100000000) >> 8;
-    int byteSel     = (addr & 0b0010000000) >> 7;
-    int instruction = (addr & 0b0001111000) >> 3;
-    int step        = (addr & 0b0000000111);
+    int disable     = (addr & 0b10000000000) >> 10;
+    int carryFlag   = (addr & 0b01000000000) >> 9;
+    int zeroFlag    = (addr & 0b00100000000) >> 8;
+    int byteSel     = (addr & 0b00010000000) >> 7;
+    int instruction = (addr & 0b00001111000) >> 3;
+    int step        = (addr & 0b00000000111);
     int instStep    = step - 2; // Instruction steps start at T2, so subtract the first two fetch/decode steps
 
     uint16_t value = 0;
 
-    if (step < 2) {
-      // First 2 steps are always part of the fetch/decode cycle
-      value = FETCH_DECODE[step];
-    } else if (step < 5) {
-      // Next 3 steps contain the actual instruction control logic
-      value = INSTRUCTIONS[instruction].logic[instStep];
-
-      // Inject jump logic if the flags register aligns with the current instruction
-      if (
-        // Only applies to the first instruction step (T2)
-        instStep == 0 && (
-          // Jump Not Zero
-          (zeroFlag == 0 && instruction == JNZ) ||
-          // Jump On Zero
-          (zeroFlag == 1 && instruction == JOZ) ||
-          // Jump Not Carry
-          (carryFlag == 0 && instruction == JNC) ||
-          // Jump On Carry
-          (carryFlag == 1 && instruction == JOC)
-        )
-      ) {
-        value = INSTRUCTIONS[JMP].logic[instStep];
+    if (disable == 0) {
+      if (step < 2) {
+        // First 2 steps are always part of the fetch/decode cycle
+        value = FETCH_DECODE[step];
+      } else if (step < 5) {
+        // Next 3 steps contain the actual instruction control logic
+        value = INSTRUCTIONS[instruction].logic[instStep];
+  
+        // Inject jump logic if the flags register aligns with the current instruction
+        if (
+          // Only applies to the first instruction step (T2)
+          instStep == 0 && (
+            // Jump Not Zero
+            (zeroFlag == 0 && instruction == JNZ) ||
+            // Jump On Zero
+            (zeroFlag == 1 && instruction == JOZ) ||
+            // Jump Not Carry
+            (carryFlag == 0 && instruction == JNC) ||
+            // Jump On Carry
+            (carryFlag == 1 && instruction == JOC)
+          )
+        ) {
+          value = INSTRUCTIONS[JMP].logic[instStep];
+        }
+      }
+  
+      // Shift the value if the byte select is on
+      if (byteSel == 1) {
+        value = value >> 8;
       }
     }
 
-    // Shift the value if the byte select is on
-    if (byteSel == 1) {
-      value = value >> 8;
-    }
 
     // Write the value to the EEPROM at the address
     writeEEPROMByte(addr, value);
@@ -87,7 +91,7 @@ void setup() {
 
   delay(1000);
 
-  printEEPROMContentsToSerial(1024);
+  printEEPROMContentsToSerial(2048);
 }
 
 void loop() {
