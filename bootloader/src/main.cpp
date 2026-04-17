@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "Button.h" // Button class in the "lib" folder. Modified from the Arduino Helpers library
+#include "Timer.h"  // Timer class in the "lib" folder. Modified from the Arduino Helpers library
 
 // All pin definitions for the project
 #define SHIFT_DATA_PIN 2  // Data pin for the shift register chain
@@ -28,18 +29,47 @@ Button bottomRightButton(BR_BUTTON_PIN);
 Button ramModeSwitch(RAM_MODE_PIN);
 Button clockModeSwitch(CLOCK_MODE_PIN);
 
+// Timers
+Timer<millis> writeTimer; // Program write timer to manage timing of the write program sequence steps
+
 /** Function declarations */
+void startProgramWriteSequence();
+void abortProgramWriteSequence();
+void onProgramWriteStop();
+void runNextWriteStep();
+bool isCurStep(int step);
 void updateShiftRegisters();
 void enableDataOutput(bool enable = true);
 void enableControlOutput(bool enable = true);
-
-void waitForButtonPress(Button& button);
 
 /** Internal state variables */
 uint8_t ramAddress = 0;         // The currently selected RAM address (0-15)]
 uint8_t ramValue = 0;           // The current value to be written to RAM at the selected address (0-255)
 bool pressResetButton = false;  // Whether the reset button should be pressed
 bool enableRamWrite = false;    // Whether the RAM should write the ramValue to the ramAddress
+
+/** Programming state variables */
+uint8_t programToWrite[16] = {  // The current program to write to RAM
+  0b11101101,
+  0b11101111,
+  0b10010110,
+  0b00001101,
+  0b00111110,
+  0b00011101,
+  0b00001100,
+  0b01100001,
+  0b00011100,
+  0b10110000,
+  0b11001101,
+  0b11110000,
+  0b00001000,
+  0b00000000,
+  0b00010000,
+  0b00000111,
+};
+bool isWritingProgram = false;  // Whether we are currently in the process of writing a program to RAM
+int curWriteStep = 0;           // The current step in the write program sequence
+int curWriteAddr = 0;           // The current RAM address being written to in the write program sequence
 
 /** Setup function (runs once at startup) */
 void setup() {
@@ -70,45 +100,191 @@ void setup() {
 
   // Set initial values for the shift registers to ensure known state on startup
   updateShiftRegisters();
-
-
-  // Testing
-  Serial.println("Starting test suite...");
-
-  // Test 1: Enable the control output and check default state
-  Serial.println("Press button to enable control output...");
-  waitForButtonPress(topLeftButton);
-  enableControlOutput(true);
-  Serial.println("Control output enabled.");
-
-  // Test 2: Toggle the reset button bit and check output
-  Serial.println("Press button to toggle reset button bit...");
-  waitForButtonPress(topLeftButton);
-  pressResetButton = !pressResetButton;
-  updateShiftRegisters();
-  pressResetButton = !pressResetButton; // Reset back to default state for next tests
-  updateShiftRegisters();
-  Serial.println("Reset button bit toggled.");
-
-  // Test 3: Toggle the RAM write strobe bit and check output
-  Serial.println("Press button to toggle RAM write strobe bit...");
-  waitForButtonPress(topLeftButton);
-  enableRamWrite = !enableRamWrite;
-  updateShiftRegisters();
-  enableRamWrite = !enableRamWrite; // Reset back to default state for next tests
-  updateShiftRegisters();
-  Serial.println("RAM write strobe bit toggled.");
-
-  // Test 4: Disable control output to restore control back to computer
-  Serial.println("Press button to disable control output...");
-  waitForButtonPress(topLeftButton);
-  enableControlOutput(false);
-  Serial.println("Control output disabled. Test suite complete.");
 }
 
 /** Main loop function (runs repeatedly after setup) */
 void loop() {
-  // Not using yet
+  /** Get top left button state */
+  Button::State topLeftState = topLeftButton.update();
+  bool isPressingTopLeftButton = (topLeftState == Button::Pressing);
+
+  if (isPressingTopLeftButton) {
+    if (!isWritingProgram) {
+      Serial.println("Detected top left button press, starting program write sequence");
+      startProgramWriteSequence();
+    } else {
+      Serial.println("Detected top left button press. Aborting current program write sequence.");
+      abortProgramWriteSequence();
+    }
+  }
+
+  /** Check if we are currently writing a program to RAM */
+  if (isWritingProgram) {
+    runNextWriteStep();
+  }
+}
+
+/** Sets up all variables for the program write sequence */
+void startProgramWriteSequence() {
+  /** Reset sequence variables */
+  curWriteStep = 0;
+  curWriteAddr = 0;
+  /** Reset shift register values */
+  enableRamWrite = false;
+  pressResetButton = false;
+  ramAddress = 0;
+  ramValue = 0;
+  updateShiftRegisters();
+  /** Reset write timer to an interval of 0: Executes immediately */
+  writeTimer.start(0);
+  /** Start the program write sequence */
+  isWritingProgram = true;
+}
+
+/** Aborts the current program write sequence */
+void abortProgramWriteSequence() {
+  Serial.println("-- Aborting program write sequence");
+  isWritingProgram = false;
+  /** Quickly detach the bootloader from the computer */
+  enableDataOutput(false);
+  enableControlOutput(false);
+  /** Report program write sequence stop */
+  onProgramWriteStop();
+}
+
+/**
+ * Called when the program write sequence stops either normally or due to an abort.
+ */
+void onProgramWriteStop() {
+  /** Not implemented yet */
+}
+
+/**
+ * Runs the next step in the program write sequence as long as the write timer has triggered.
+ * Each step in the sequence can set a non-blocking time delay before the next step.
+ */
+void runNextWriteStep() {
+  // Check the current write timer to see if we can process to the next step in the write sequence.
+  if (!writeTimer) {
+    return;
+  }
+
+  // Track the sequence step and let each step increment it
+  int step = 0;
+
+  // Step 1: Enable control output.
+  // This takes control of the computer and disables the control word
+  // and address register to prevent bus and input contention while we
+  // apply the new RAM address and RAM values during writing.
+  if (isCurStep(step++)) {
+    Serial.println("-- Enabling Control Register Output");
+    enableControlOutput(true);
+    writeTimer.start(500);
+    return;
+  }
+
+  // Step 2: Enable the output for the data shift registers now that the bus
+  // and address register are disabled.
+  if (isCurStep(step++)) {
+    Serial.println("-- Enabling Data Register Output");
+    enableDataOutput(true);
+    writeTimer.start(500);
+    return;
+  }
+
+  step += (curWriteAddr * 3); // Increment by the RAM address value multiplied by the write cycle steps
+  
+  // Step 3: Write the program to RAM one address at a time
+  if (curWriteAddr < 16) {
+    // Step 3a: Handle selecting the current RAM address and RAM value
+    if (isCurStep(step++)) {
+      Serial.print("-- Writing value for RAM address ");
+      Serial.println(curWriteAddr, BIN);
+      Serial.print("   -- Setting RAM address to ");
+      Serial.print(curWriteAddr, BIN);
+      Serial.print(" and RAM value to ");
+      Serial.println(programToWrite[curWriteAddr], BIN);
+      ramAddress = curWriteAddr;
+      ramValue = programToWrite[curWriteAddr];
+      updateShiftRegisters();
+      writeTimer.start(100);
+      return;
+    }
+  
+    // Step 3b: Set the ram write flag to true to start writing the value to RAM
+    if (isCurStep(step++)) {
+      Serial.println("   -- Enabling RAM write");
+      enableRamWrite = true;
+      updateShiftRegisters();
+      writeTimer.start(100);
+      return;
+    }
+  
+    // Step 3c: Set the ram write flag to false to finish writing the value to RAM
+    if (isCurStep(step++)) {
+      Serial.println("   -- Disabling RAM write");
+      enableRamWrite = false;
+      updateShiftRegisters();
+      curWriteAddr++; // Increment the current RAM address being written to for the next write cycle
+      writeTimer.start(100);
+      return;
+    }
+  }
+  
+  // Step 4: Press the computer reset button
+  if (isCurStep(step++)) {
+    Serial.println("-- Pressing computer reset button");
+    pressResetButton = true;
+    updateShiftRegisters();
+    writeTimer.start(500);
+    return;
+  }
+  
+  // Step 5: Release the computer reset button
+  if (isCurStep(step++)) {
+    Serial.println("-- Releasing computer reset button");
+    pressResetButton = false;
+    updateShiftRegisters();
+    writeTimer.start(500);
+    return;
+  }
+
+  // Step 6: Disable the data shift register outputs now that we are done writing the program
+  if (isCurStep(step++)) {
+    Serial.println("-- Disabling data register output");
+    enableDataOutput(false);
+    writeTimer.start(500);
+    return;
+  }
+
+  // Step 7: Disable the control shift register output to restore control to the computer
+  if (isCurStep(step++)) {
+    Serial.println("-- Disabling control register output");
+    enableControlOutput(false);
+    writeTimer.start(500);
+    return;
+  }
+
+  // Step 8: Stop writing the program
+  if (isCurStep(step++)) {
+    Serial.println("-- Finished writing program to RAM");
+    isWritingProgram = false;
+    onProgramWriteStop(); // Report program write sequence stop
+    return;
+  }
+}
+
+/**
+ * Checks if the step provided matches the current step in the write program sequence.
+ * If it does, it advances the current step and returns true. Otherwise, it returns false
+ * and does not advance the current step.
+ */
+bool isCurStep(int step) {
+  if (step == curWriteStep) {
+    curWriteStep++;
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -158,8 +334,4 @@ void enableDataOutput(bool enable = true) {
  */
 void enableControlOutput(bool enable = true) {
   digitalWrite(CTRL_ENABLE_PIN, enable ? LOW : HIGH); // Active LOW enable pin
-}
-
-void waitForButtonPress(Button& button) {
-  while (button.update() != Button::Pressing) {}
 }
