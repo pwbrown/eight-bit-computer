@@ -22,11 +22,11 @@ void setup() {
     char* id = INSTRUCTIONS[i].id;
     if (strcmp(id, "JMP") == 0) {
       JMP = i;
-    } else if (strcmp(id, "JOC") == 0) {
+    } else if (strcmp(id, "JC") == 0) {
       JOC = i;
     } else if (strcmp(id, "JNC") == 0) {
       JNC = i;
-    } else if (strcmp(id, "JOZ") == 0) {
+    } else if (strcmp(id, "JZ") == 0) {
       JOZ = i;
     } else if (strcmp(id, "JNZ") == 0) {
       JNZ = i;
@@ -55,8 +55,8 @@ void setup() {
       if (step < 2) {
         // First 2 steps are always part of the fetch/decode cycle
         value = FETCH_DECODE[step];
-      } else if (step < 5) {
-        // Next 3 steps contain the actual instruction control logic
+      } else if (step < 6) {
+        // Next 4 steps contain the actual instruction control logic
         value = INSTRUCTIONS[instruction].logic[instStep];
   
         // Inject jump logic if the flags register aligns with the current instruction

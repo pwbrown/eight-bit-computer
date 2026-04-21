@@ -49,23 +49,57 @@ bool pressResetButton = false;  // Whether the reset button should be pressed
 bool enableRamWrite = false;    // Whether the RAM should write the ramValue to the ramAddress
 
 /** Programming state variables */
-uint8_t programToWrite[16] = {  // The current program to write to RAM
-  0b11101101,
-  0b11101111,
-  0b10010110,
-  0b00001101,
-  0b00111110,
-  0b00011101,
-  0b00001100,
-  0b01100001,
-  0b00011100,
-  0b10110000,
-  0b11001101,
-  0b11110000,
-  0b00001000,
-  0b00000000,
-  0b00010000,
-  0b00000111,
+// uint8_t programToWrite[16] = {  // The current program to write to RAM
+//   0b11101101,
+//   0b11101111,
+//   0b10010110,
+//   0b00001101,
+//   0b00111110,
+//   0b00011101,
+//   0b00001100,
+//   0b01100001,
+//   0b00011100,
+//   0b10110000,
+//   0b11001101,
+//   0b11110000,
+//   0b00001000,
+//   0b00000000,
+//   0b00010000,
+//   0b00000111,
+// };
+uint8_t programToWrite[16] = { // Multiply (2 * 2)
+    // LOOP: SHL product
+    0b01111101,
+    // SHL y
+    0b01111111,
+    // JNC SKIP
+    0b10010110,
+    // LDA product
+    0b00001101,
+    // ADD x
+    0b00111110,
+    // STA product
+    0b00011101,
+    // SKIP: DEC counter
+    0b01101100,
+    // JNZ LOOP
+    0b10110000,
+    // DSM product
+    0b11101101,
+    // HLT
+    0b11110000,
+    // NOOP
+    0b00000000,
+    // NOOP
+    0b00000000,
+    // counter = 8
+    0b00001000,
+    // product = 0
+    0b00000000,
+    // x = 2
+    0b00000010,
+    // y = 2
+    0b00000010,
 };
 bool isWritingProgram = false;  // Whether we are currently in the process of writing a program to RAM
 int curWriteStep = 0;           // The current step in the write program sequence

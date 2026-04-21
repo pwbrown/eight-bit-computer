@@ -40,62 +40,49 @@ const uint16_t HLT = 1 << 15; // Halt Enable (stop the clock)
 // Definition of a single instruction
 struct Instruction {
     char* id;          // Instruction Identifier (ex. ADD)
-    bool hasArg;       // Indicates if the instruction has an argument
-    uint16_t logic[3]; // Logic values representing T2-T4 of the microcode sequence
+    uint16_t logic[4]; // Logic values representing T2-T5 of the microcode sequence
 };
 
 // List of the first 2 microcode operations for the fetch and decode stages, which are the same for all instructions
 const uint16_t FETCH_DECODE[2] = {
-    // T0 - Fetch
-    CO|MI,
-    // T1 - Decode instruction and increment program counter
-    RO|II|CE,
+    // T0 - Fetch and increment program counter and load instruction into memory address register
+    CO|CE|MI,
+    // T1 - Load instruction from memory into instruction register and preload memory address register from instruction
+    RO|II|MI,
 };
 
 // The full list of ordered instructions with their control logic (template)
 const Instruction INSTRUCTIONS[16] = {
     // 0000: Load A: Loads the A Register with a value from RAM at the given address
-    {"LDA", true, {IO|MI, RO|AI, 0}},
+    {"LDA", {RO|AI, 0, 0, 0}},
     // 0001: Store A: Stores the value in the A Register into RAM at the given address
-    {"STA", true, {IO|MI, AO|RI, 0}},
+    {"STA", {AO|RI, 0, 0, 0}},
     // 0010: Load Immediate: Loads the given value directly into the A Register
-    {"LDI", true, {IO|AI, 0, 0}},
+    {"LDI", {IO|AI, 0, 0, 0}},
     // 0011: Add: Adds the value at the given memory address to the A Register and stores the result in the A Register
-    {"ADD", true, {IO|MI, RO|BI, EO|AI|FI}},
-    // 0100: Add Immediate: Adds the given value to the A Register and stores the result in the A Register
-    {"ADI", true, {IO|BI, EO|AI|FI, 0}},
-    // 0101: Subtract: Subtracts the value at the given memory address from the A Register and stores the result in the A Register
-    {"SUB", true, {IO|MI, RO|BI, EO|SU|AI|FI}},
-    // 0110: Subtract Immediate: Subtracts the given value from the A Register and stores the result in the A Register
-    {"SUI", true, {IO|BI, EO|SU|AI|FI, 0}},
-    // 0111: Jump: Performs an unconditional jump to the given instruction address
-    {"JMP", true, {IO|J, 0, 0}},
+    {"ADD", {RO|BI, EO|AI|FI, 0, 0}},
+    // 0100: Subtract: Subtracts the value at the given memory address from the A Register and stores the result in the A Register
+    {"SUB", {RO|BI, EO|SU|AI|FI, 0, 0}},
+    // 0101: Increment: Increments the value in memory at the given address by 1 and stores the result back in memory
+    {"INC", {RO|AI, BI, EO|AI|FI, AO|RI}},
+    // 0110: Decrement: Decrements the value in memory at the given address by 1 and stores the result back in memory
+    {"DEC", {RO|AI, BI, EO|SU|AI|FI, AO|RI}},
+    // 0111: Shift Left: Shifts the value in memory at the given address left by 1 and stores the result back in memory
+    {"SHL", {RO|AI|BI, EO|AI|FI, AO|RI, 0}},
     // 1000: Jump on Carry: Performs a jump if the carry flag is enabled
-    {"JOC", true, {0, 0, 0}},
+    {"JC", {0, 0, 0, 0}},
     // 1001: Jump not Carry: Performs a jump if the carry flag is not enabled
-    {"JNC", true, {0, 0, 0}},
+    {"JNC", {0, 0, 0, 0}},
     // 1010: Jump on Zero: Performs a jump if the zero flag is enabled
-    {"JOZ", true, {0, 0, 0}},
+    {"JZ", {0, 0, 0, 0}},
     // 1011: Jump not Zero: Performs a jump if the zero flag is not enabled
-    {"JNZ", true, {0, 0, 0}},
-    // 1100: Display: Displays a value from the given memory address on the numeric output display
-    {"DSM", true, {IO|MI, RO|OI, 0}},
-    // 1101: Double A Store: Doubles the A Register value and stores the result in memory at the given address
-    {"DAS", true, {IO|MI, AO|BI, EO|FI|RI}},
-    // 1110: Double Memory Store: Doubles the value in memory at the given address and stores the result back to the same address
-    {"DMS", true, {IO|MI, RO|AI|BI, EO|FI|RI}},
+    {"JNZ", {0, 0, 0, 0}},
+    // 1100: Jump: Performs an unconditional jump to the given instruction address
+    {"JMP", {IO|J, 0, 0, 0}},
+    // 1101: Output: Displays the value in the A Register on the numeric output display
+    {"OUT", {AO|OI, 0, 0, 0}},
+    // 1110: Display Memory: Displays the value in memory at the given address on the numeric output display
+    {"DSM", {RO|OI, 0, 0, 0}},
     // 1111: Halt: Stops the clock to halt the computer program
-    {"HLT", false, {HLT, 0, 0}},
-};
-
-// List of additional instructions that can replace base instructions if the need arises.
-const Instruction MISC_INSTRUCTIONS[] = {
-    // Display Immediate: Displays the given value directly on the numeric output display
-    {"DSI", true, {IO|OI, 0, 0}},
-    // Display A Register: Displays the value in the A Register on the numeric output display
-    {"DSA", false, {AO|OI, 0, 0}},
-    // Clear: Sets a value in memory at the given address to 0
-    {"CLR", true, {IO|MI, RI, 0}},
-    // Negate: Negates the value in the A Register by subtracting the A Register value from 0
-    {"NEG", false, {AO|BI, AI, EO|SU|AI}},
+    {"HLT", {HLT, 0, 0, 0}},
 };
