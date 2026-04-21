@@ -358,7 +358,7 @@ void updateShiftRegisters() {
  * Enables or disables the output of the data shift registers to the computer based on the input parameter.
  * @param enable If true, enables data output; if false, disables data output.
  */
-void enableDataOutput(bool enable = true) {
+void enableDataOutput(bool enable) {
   digitalWrite(DATA_ENABLE_PIN, enable ? LOW : HIGH); // Active LOW enable pin
 }
 
@@ -366,6 +366,6 @@ void enableDataOutput(bool enable = true) {
  * Enables or disables the output of the control shift register to the computer based on the input parameter.
  * @param enable If true, enables control signal output; if false, disables control signal output.
  */
-void enableControlOutput(bool enable = true) {
+void enableControlOutput(bool enable) {
   digitalWrite(CTRL_ENABLE_PIN, enable ? LOW : HIGH); // Active LOW enable pin
 }
