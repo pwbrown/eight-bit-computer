@@ -1,3 +1,6 @@
+#ifndef SCREEN_H
+#define SCREEN_H
+
 #include <Arduino.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -98,3 +101,5 @@ void displayButtonLabels(const char* tl, const char* tr, const char* bl, const c
 
     display.display();
 }
+
+#endif // SCREEN_H

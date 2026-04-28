@@ -1,88 +1,224 @@
+#ifndef INSTRUCTION_SET_H
+#define INSTRUCTION_SET_H
+
 #include <Arduino.h>
 
-/*************************** CONTROL SIGNAL BIT VALUES **************************/
+/*************************** CONTROL SIGNAL MASK VALUES **************************/
 
 // Output Module (Numeric Display)
-const uint16_t OI =  1 << 0;  // Output In
+const uint16_t OUTPUT_IN =  1 << 0;        // OI: Output In
 
 // B Register
-const uint16_t BI =  1 << 1;  // B Register In
+const uint16_t B_REG_IN =  1 << 1;         // BI: B Register In
 
 // Arithmetic Logic Unit (ALU)
-const uint16_t FI =  1 << 2;  // Flags Register In
-const uint16_t SU =  1 << 3;  // Subtract Enable
-const uint16_t EO =  1 << 4;  // Sum Out (ALU Out)
+const uint16_t FLAGS_REG_IN =  1 << 2;     // FI: Flags Register In
+const uint16_t SUBTRACT =  1 << 3;         // SU: Subtract Enable
+const uint16_t SUM_OUT =  1 << 4;          // EO: Sum Out (ALU Out)
 
 // A Register
-const uint16_t AO =  1 << 5;  // A Register Out
-const uint16_t AI =  1 << 6;  // A Register In
+const uint16_t A_REG_OUT =  1 << 5;        // AO: A Register Out
+const uint16_t A_REG_IN =  1 << 6;         // AI: A Register In
 
 // Program Counter
-const uint16_t J  =  1 << 7;  // Jump (Counter In)
-const uint16_t CO =  1 << 8;  // Counter Out 
-const uint16_t CE =  1 << 9;  // Counter Enable (Increment)
+const uint16_t JUMP  =  1 << 7;            // J: Jump (Counter In)
+const uint16_t COUNT_OUT =  1 << 8;        // CO: Counter Out/Enable 
+
+// Auxiliary Bus Control
+const uint16_t AUX_OUT =  1 << 9;          // XO: Auxiliary Out (Right now this just puts a value of 1 on the bus)
 
 // Instruction Register
-const uint16_t IO =  1 << 10; // Instruction Register Out
-const uint16_t II =  1 << 11; // Instruction Register In
+const uint16_t INST_REG_OUT =  1 << 10;    // IO: Instruction Register Out
+const uint16_t INST_REG_IN =  1 << 11;     // II: Instruction Register In
 
 // RAM (Memory)
-const uint16_t RO =  1 << 12; // RAM Out
-const uint16_t RI =  1 << 13; // RAM In
-const uint16_t MI =  1 << 14; // Memory Address Register In
+const uint16_t RAM_OUT =  1 << 12;         // RO: RAM Out
+const uint16_t RAM_IN =  1 << 13;          // RI: RAM In
+const uint16_t MEM_ADDR_REG_IN =  1 << 14; // MI: Memory Address Register In
 
 // MISC
-const uint16_t HLT = 1 << 15; // Halt Enable (stop the clock)
+const uint16_t HALT = 1 << 15;             // HLT: Halt Enable (stop the clock)
 
 
 /************************** Instructions *******************************/
 
+// Enumeration of the possible instruction mnemonics for the 8-bit computer
+enum Instruction {
+    LDA, // Load A
+    STA, // Store A
+    LDI, // Load Immediate
+    ADD, // Add
+    SUB, // Subtract
+    INX, // Increment With Aux
+    DEX, // Decrement With Aux
+    DBL, // Double (Shift Left)
+    JC,  // Jump on Carry
+    JNC, // Jump not Carry
+    JZ,  // Jump on Zero
+    JNZ, // Jump not Zero
+    JMP, // Jump
+    CLR, // Clear Memory (Set to 0)
+    DSM, // Display Memory
+    HLT, // Halt
+    NOP, // No Operation (empty instruction)
+};
+
 // Definition of a single instruction
-struct Instruction {
-    char* id;          // Instruction Identifier (ex. ADD)
-    uint16_t logic[4]; // Logic values representing T2-T5 of the microcode sequence
+struct InstructionConfig {
+    Instruction id;    // Instruction identifier
+    uint16_t steps[4]; // Logic values representing T2-T5 of the microcode sequence
 };
 
 // List of the first 2 microcode operations for the fetch and decode stages, which are the same for all instructions
 const uint16_t FETCH_DECODE[2] = {
     // T0 - Fetch and increment program counter and load instruction into memory address register
-    CO|CE|MI,
+    COUNT_OUT | MEM_ADDR_REG_IN,
     // T1 - Load instruction from memory into instruction register and preload memory address register from instruction
-    RO|II|MI,
+    RAM_OUT | INST_REG_IN | MEM_ADDR_REG_IN,
 };
 
-// The full list of ordered instructions with their control logic (template)
-const Instruction INSTRUCTIONS[16] = {
-    // 0000: Load A: Loads the A Register with a value from RAM at the given address
-    {"LDA", {RO|AI, 0, 0, 0}},
-    // 0001: Store A: Stores the value in the A Register into RAM at the given address
-    {"STA", {AO|RI, 0, 0, 0}},
-    // 0010: Load Immediate: Loads the given value directly into the A Register
-    {"LDI", {IO|AI, 0, 0, 0}},
-    // 0011: Add: Adds the value at the given memory address to the A Register and stores the result in the A Register
-    {"ADD", {RO|BI, EO|AI|FI, 0, 0}},
-    // 0100: Subtract: Subtracts the value at the given memory address from the A Register and stores the result in the A Register
-    {"SUB", {RO|BI, EO|SU|AI|FI, 0, 0}},
-    // 0101: Increment: Increments the value in memory at the given address by 1 and stores the result back in memory
-    {"INC", {RO|AI, BI, EO|AI|FI, AO|RI}},
-    // 0110: Decrement: Decrements the value in memory at the given address by 1 and stores the result back in memory
-    {"DEC", {RO|AI, BI, EO|SU|AI|FI, AO|RI}},
-    // 0111: Shift Left: Shifts the value in memory at the given address left by 1 and stores the result back in memory
-    {"SHL", {RO|AI|BI, EO|AI|FI, AO|RI, 0}},
-    // 1000: Jump on Carry: Performs a jump if the carry flag is enabled
-    {"JC", {0, 0, 0, 0}},
-    // 1001: Jump not Carry: Performs a jump if the carry flag is not enabled
-    {"JNC", {0, 0, 0, 0}},
-    // 1010: Jump on Zero: Performs a jump if the zero flag is enabled
-    {"JZ", {0, 0, 0, 0}},
-    // 1011: Jump not Zero: Performs a jump if the zero flag is not enabled
-    {"JNZ", {0, 0, 0, 0}},
-    // 1100: Jump: Performs an unconditional jump to the given instruction address
-    {"JMP", {IO|J, 0, 0, 0}},
-    // 1101: Output: Displays the value in the A Register on the numeric output display
-    {"OUT", {AO|OI, 0, 0, 0}},
-    // 1110: Display Memory: Displays the value in memory at the given address on the numeric output display
-    {"DSM", {RO|OI, 0, 0, 0}},
-    // 1111: Halt: Stops the clock to halt the computer program
-    {"HLT", {HLT, 0, 0, 0}},
+// The full list of ordered instructions with their control logic
+const InstructionConfig INSTRUCTIONS[16] = {
+    // Load A: Loads the A Register with a value from RAM at the given address
+    {
+        id: LDA,
+        steps: {
+            RAM_OUT | A_REG_IN, // Move RAM value to A Register
+        },
+    },
+    
+    // Store A: Stores the value in the A Register to RAM at the given address
+    {
+        id: STA,
+        steps: {
+            A_REG_OUT | RAM_IN, // Move A Register value to RAM
+        },
+    },
+    
+    // Load Immediate: Loads the given value directly into the A Register
+    {
+        id: LDI,
+        steps: {
+            INST_REG_OUT | A_REG_IN, // Move Instruction Argument to A Register
+        },
+    },
+    
+    // Add: Adds the value in RAM at the given address to the value in the A Register and stores the result in the A Register
+    {
+        id: ADD,
+        steps: {
+            RAM_OUT | B_REG_IN,                // Move RAM value to B Register
+            SUM_OUT | A_REG_IN | FLAGS_REG_IN, // Move ALU Sum (A + B) into the A Register and update flags
+        },
+    },
+    
+    // Subtract: Subtracts the value in RAM at the given address from the value in the A Register and stores the result in the A Register
+    {
+        id: SUB,
+        steps: {
+            RAM_OUT | B_REG_IN,                           // Move RAM value to B Register
+            SUM_OUT | SUBTRACT | A_REG_IN | FLAGS_REG_IN, // Move ALU Difference (A - B) into the A Register and update flags
+        },
+    },
+    
+    // Increment With Aux: Increments the value in RAM at the given address by the AUX value (1) and stores the result in the A Register and replaces the original memory value
+    {
+        id: INX,
+        steps: {
+            RAM_OUT | A_REG_IN,                // Move RAM value to A Register
+            AUX_OUT | B_REG_IN,                // Move AUX value to B Register
+            SUM_OUT | A_REG_IN | FLAGS_REG_IN, // Move ALU Sum to A Register and update flags
+            A_REG_OUT | RAM_IN,                // Move A Register value to RAM
+        },
+    },
+    
+    // Decrement With Aux: Decrements the value in RAM at the given address by the AUX value (1) and stores the result in the A Register and replaces the original memory value
+    {
+        id: DEX,
+        steps: {
+            RAM_OUT | A_REG_IN,                           // Move RAM value to A Register
+            AUX_OUT | B_REG_IN,                           // Move AUX value to B Register
+            SUM_OUT | SUBTRACT | A_REG_IN | FLAGS_REG_IN, // Move ALU Difference to A Register and update flags
+            A_REG_OUT | RAM_IN,                           // Move A Register value to RAM
+        },
+    },
+    
+    // Double (Left Shift): Doubles the value in memory at the given address and stores the result in the A Register and replaces the original memory value
+    {
+        id: DBL,
+        steps: {
+            RAM_OUT | A_REG_IN | B_REG_IN,     // Move RAM value to both A Register and B Register
+            SUM_OUT | A_REG_IN | FLAGS_REG_IN, // Move ALU Sum to A Register and update flags
+            A_REG_OUT | RAM_IN,                // Move A Register value to RAM
+        },
+    },
+    
+    // Jump on Carry: Jumps to the given memory address if the carry flag is enabled
+    {
+        id: JC,
+        steps: {}, // Control EEPROM programmer will handle setting the steps where appropriate
+    },
+    
+    // Jump not Carry: Jumps to the given memory address if the carry flag is disabled
+    {
+        id: JNC,
+        steps: {}, // Control EEPROM programmer will handle setting the steps where appropriate
+    },
+    
+    // Jump on Zero: Jumps to the given memory address if the zero flag is enabled
+    {
+        id: JZ,
+        steps: {}, // Control EEPROM programmer will handle setting the steps where appropriate
+    },
+    
+    // Jump not Zero: Jumps to the given memory address if the zero flag is disabled
+    {
+        id: JNZ,
+        steps: {}, // Control EEPROM programmer will handle setting the steps where appropriate
+    },
+    
+    // Jump: Unconditionally jumps to the given memory address
+    {
+        id: JMP,
+        steps:
+        {
+            INST_REG_OUT | JUMP, // Move Instruction Argument to Program Counter to perform the jump
+        },
+    },
+    
+    // Clear: Clears the value in RAM at the given address by setting it to zero AND loads zero into the A Register
+    {
+        id: CLR,
+        steps: {
+            RAM_IN | A_REG_IN, // Moves the default value of 0 on the bus into RAM to clear the value and into the A Register
+        },
+    },
+    
+    // Display Memory: Displays the value in RAM at the given address on the numeric output display AND loads the value into the A Register
+    {
+        id: DSM,
+        steps: {
+            RAM_OUT | OUTPUT_IN | A_REG_IN, // Move RAM value to both the A Register and Output
+        },
+    },
+
+    // Halt: Stops the clock to halt the program
+    {
+        id: HLT,
+        steps: {
+            HALT,
+        },
+    },
 };
+
+/** Returns the index of the instruction with the given ID, or -1 if not found */
+int8_t getInstructionIndexById(Instruction id) {
+    for (int8_t i = 0; i < 16; i ++ ) {
+        if (INSTRUCTIONS[i].id == id) {
+            return i;
+        }
+    }
+    return -1; // Return -1 if the instruction is not found
+}
+
+#endif // INSTRUCTION_SET_H

@@ -17,21 +17,11 @@ void setup() {
   setupEEPROMPins();
 
   // Determine instruction position for each of the jump instructions
-  int JMP, JOC, JNC, JOZ, JNZ = 0;
-  for (int i = 0; i < 16; i += 1) {
-    char* id = INSTRUCTIONS[i].id;
-    if (strcmp(id, "JMP") == 0) {
-      JMP = i;
-    } else if (strcmp(id, "JC") == 0) {
-      JOC = i;
-    } else if (strcmp(id, "JNC") == 0) {
-      JNC = i;
-    } else if (strcmp(id, "JZ") == 0) {
-      JOZ = i;
-    } else if (strcmp(id, "JNZ") == 0) {
-      JNZ = i;
-    }
-  }
+  int JMP_INDEX = getInstructionIndexById(JMP);
+  int JC_INDEX = getInstructionIndexById(JC);
+  int JNC_INDEX = getInstructionIndexById(JNC);
+  int JZ_INDEX = getInstructionIndexById(JZ);
+  int JNZ_INDEX = getInstructionIndexById(JNZ);
 
   // Write the instructions to the EEPROM
   Serial.print("Programming EEPROM");
@@ -57,23 +47,23 @@ void setup() {
         value = FETCH_DECODE[step];
       } else if (step < 6) {
         // Next 4 steps contain the actual instruction control logic
-        value = INSTRUCTIONS[instruction].logic[instStep];
+        value = INSTRUCTIONS[instruction].steps[instStep];
   
         // Inject jump logic if the flags register aligns with the current instruction
         if (
           // Only applies to the first instruction step (T2)
           instStep == 0 && (
             // Jump Not Zero
-            (zeroFlag == 0 && instruction == JNZ) ||
+            (zeroFlag == 0 && instruction == JNZ_INDEX) ||
             // Jump On Zero
-            (zeroFlag == 1 && instruction == JOZ) ||
+            (zeroFlag == 1 && instruction == JZ_INDEX) ||
             // Jump Not Carry
-            (carryFlag == 0 && instruction == JNC) ||
+            (carryFlag == 0 && instruction == JNC_INDEX) ||
             // Jump On Carry
-            (carryFlag == 1 && instruction == JOC)
+            (carryFlag == 1 && instruction == JC_INDEX)
           )
         ) {
-          value = INSTRUCTIONS[JMP].logic[instStep];
+          value = INSTRUCTIONS[JMP_INDEX].steps[instStep];
         }
       }
   

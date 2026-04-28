@@ -1,3 +1,6 @@
+#ifndef EEPROM_PROGRAMMER_H
+#define EEPROM_PROGRAMMER_H
+
 #include "Arduino.h"
 
 // Pin definitions
@@ -114,3 +117,5 @@ void printEEPROMContentsToSerial(int numBytes = 256) {
         Serial.println(buf);
     }
 }
+
+#endif // EEPROM_PROGRAMMER_H
