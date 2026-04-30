@@ -10,7 +10,6 @@ const uint8_t MAX_PROGRAM_VARIABLES = 8;     // Maximum number of variables a pr
 // Function declarations
 bool isValidProgramIndex(uint8_t programIndex, const char* errorContext);
 bool isValidInstructionIndex(uint8_t instructionIndex, const char* errorContext);
-void printErrorMessage(const char* errorContext, const char* errorMessage);
 
 // Data structure for a single program variable that can be modified by the user before programming into RAM
 struct ProgramVariable {
@@ -61,10 +60,10 @@ Program PROGRAMS[] = {
             {JNZ, 0},    // 7: Jump to the LOOP instruction if the new counter is not zero
             // End of the Program
             {DSM, 11},   // 8: Display the product to the numeric display
-            {HLT, 0},       // 9: Halt execution
+            {HLT, 0},    // 9: Halt execution
             // Values
-            {NOP, 8},         // 10: counter (Always starts at 8)
-            {NOP, 0},         // 11: product (Initialized to 0)
+            {NOP, 8},    // 10: counter (Always starts at 8)
+            {NOP, 0},    // 11: product (Initialized to 0)
         },
     },
     {
@@ -87,8 +86,8 @@ Program PROGRAMS[] = {
             {JNC, 2},  // 6: Jump to DEC_D if the subtraction resulted in a negative number
             {JMP, 4},  // 7: Jump to SUB_D if the subtraction resulted in a positive number
             // END: Display the largest divisor and halt execution
-            {DSM, 11}, // 8: Display the divisor value
-            {HLT, 0},     // 9: Halt execution
+            {DSM, 10}, // 8: Display the divisor value
+            {HLT, 0},  // 9: Halt execution
         },
     },
     {
@@ -169,7 +168,7 @@ byte getProgramInstructionByte(uint8_t programIndex, uint8_t instructionIndex) {
         // Handle variable substitution
         for (int i = 0; i < MAX_PROGRAM_VARIABLES; i += 1) {
             ProgramVariable variable = PROGRAMS[programIndex].variables[i];
-            if (variable.name != nullptr && variable.address == instruction.arg) {
+            if (variable.name != nullptr && variable.address == instructionIndex) {
                 instructionByte = byte(variable.value);
                 break;
             }
@@ -177,7 +176,7 @@ byte getProgramInstructionByte(uint8_t programIndex, uint8_t instructionIndex) {
     } else {
         // Validate arg value to be between 0 and 15 since we only have 4 bits to work with and no access to the sign bit
         if (instruction.arg < 0 || instruction.arg > 15) {
-            printErrorMessage("getProgramInstructionByte", "Instruction argument value must be between 0 and 15");
+            // Error: invalid instruction argument value
             return 0;
         }
         

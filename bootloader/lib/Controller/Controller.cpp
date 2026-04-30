@@ -9,6 +9,10 @@
 using namespace Controller;
 using namespace SharedTypes;
 
+// Function declarations for internal use
+void handleNextWriteStep();
+void startProgramWriteSequence();
+
 enum View {
     PROGRAM_LIST,
     PROGRAM_EDITOR,
@@ -53,13 +57,18 @@ void drawViewLabels(const ViewLabels& labels) {
     Screen::drawCornerLabel(BR, labels.bottomRight);
 }
 
+// Redraws the program list view
+void drawProgramListView() {
+  Screen::clear();
+  drawViewLabels(PROGRAM_LIST_LABELS);
+  Screen::drawMiddleLabel(PROGRAMS[currentProgramIndex].name);
+}
+
 // Switches to the program list view and updates the screen accordingly
 void switchToProgramListView() {
     currentView = PROGRAM_LIST;
-    Screen::clear();
-    drawViewLabels(PROGRAM_LIST_LABELS);
-    Screen::drawMiddleLabel(PROGRAMS[currentProgramIndex].name);
-}
+    drawProgramListView();
+}  
 
 void switchToProgramEditorView() {
     currentView = PROGRAM_EDITOR;
@@ -69,7 +78,24 @@ void switchToProgramEditorView() {
 }
 
 void handleProgramListView() {
-    // Todo
+    // Goto the next program
+    if (Input::isPressingButton(BL)) {
+        currentProgramIndex = (currentProgramIndex + 1) % NUM_PROGRAMS; // Increment program index and wrap around using modulo
+        drawProgramListView();
+    }
+    // Goto the previous program
+    else if (Input::isPressingButton(TL)) {
+        currentProgramIndex = (currentProgramIndex - 1 + NUM_PROGRAMS) % NUM_PROGRAMS; // Decrement program index and wrap around using modulo
+        drawProgramListView();
+    }
+    // Start writing the program to RAM
+    else if (Input::isPressingButton(TR)) {
+        startProgramWriteSequence();
+    }
+
+    if (isWritingProgram) {
+        handleNextWriteStep();
+    }
 }
 
 void handleProgramEditorView() {
@@ -149,7 +175,7 @@ void handleNextWriteStep() {
   if (currentWriteAddress < 16) {
     // Step 3a: Handle selecting the current RAM address and RAM value
     if (isCurrentStep(step++)) {
-      uint8_t instructionBin = 0; // getProgramInstructionBinary(currentProgramIndex, currentWriteAddress);
+      byte instructionBin = getProgramInstructionByte(currentProgramIndex, currentWriteAddress);
       Output::setRamAddress(currentWriteAddress);
       Output::setRamValue(instructionBin);
       Output::update();
