@@ -3,36 +3,18 @@
 
 #include <Arduino.h>
 
-// "Static" class the manage the outputs for the bootloader
-class Output {
-    public:
-        // Initilize output shift register pins and enable pins
-        static void setup();
-        
-        // Update the shift registers with the current data and control values
-        static void update();
+namespace Output {
+    void setup();  // Initialize output shift register pins
+    void update(); // Update the shift registers with the current data values and control settings
 
-        // Toggle the output enable for the data shift registers (RAM address and value)
-        static void enableDataOutput();
-        static void disableDataOutput();
+    void setDataOutput(bool enable);    // Enables/disables data shift register output
+    void setControlOutput(bool enable); // Enables/disables control shift register output
 
-        // Toggle the output enable for the control shift register (control signals)
-        static void enableControlOutput();
-        static void disableControlOutput();
+    void setRamAddress(uint8_t address); // Sets the RAM address to be written to
+    void setRamValue(uint8_t value);     // Sets the RAM value to be written
 
-        // Update data register values
-        static void setRamAddress(uint8_t address);
-        static void setRamValue(uint8_t value);
-
-        // Update control register values
-        static void setResetButton(bool pressed);
-        static void setRamWrite(bool enabled);
-
-    private:
-        static uint8_t ramAddress;
-        static uint8_t ramValue;
-        static bool pressingResetButton;
-        static bool enablingRamWrite;
-};
+    void setResetButton(bool pressed); // Presses/releases the computer reset button through the control register
+    void setRamWrite(bool enabled);    // Enables/disables the RAM write bit through the control register
+}
 
 #endif // OUTPUT_H

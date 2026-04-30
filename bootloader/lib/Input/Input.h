@@ -1,38 +1,25 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include <Arduino.h>
 #include "Button.h"
+#include "SharedTypes.h"  // Contains the Corner enum definition
 
-class Input {
-    public:
-        // Setup all input pins and initial states
-        static void setup();
+using namespace SharedTypes;
 
-        // Update the state of all inputs
-        static void update();
+namespace Input {
+    void setup();  // Setup all input buttons and switches
+    void update(); // Update the internal state of all buttons and switches
 
-        // Helpers for detecting if buttons presses are being initiated
-        static bool isPressingTopLeftButton();
-        static bool isPressingTopRightButton();
-        static bool isPressingBottomLeftButton();
-        static bool isPressingBottomRightButton();
+    // Check button state
+    Button::State getButtonState(Corner corner);      // Gets the current button state
+    unsigned long getButtonStableTime(Corner corner); // Gets the time in milliseconds that the button has been in a stable state
+    bool isPressingButton(Corner corner);  // Detects if the button is transitioning from released to pressed
+    bool isHoldingButton(Corner corner);   // Detects if the button is currently being considered "held"
+    bool isReleasingButton(Corner corner); // Detects if the button is transitioning from pressed to released
 
-        // Helpers for detecting the current state of input switches
-        static bool isRamInRunMode();
-        static bool isClockInManualMode();
-
-    private:
-        // Buttons for user inputs
-        static Button topLeftButton;
-        static Button topRightButton;
-        static Button bottomLeftButton;
-        static Button bottomRightButton;
-        
-        // Switches from the computer for mode detection
-        static Button ramModeSwitch;
-        static Button clockModeSwitch;
-};
-
+    // Computer switch states
+    bool isRamInRunMode();      // Indicates if the RAM mode switch is in RUN mode (vs. PROGRAM)
+    bool isClockInManualMode(); // Indicates if the clock mode switch is in MANUAL mode (vs. AUTOMATIC)
+}
 
 #endif // INPUT_H

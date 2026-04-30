@@ -2,8 +2,40 @@
 #define PROGRAMS_H
 
 #include <Arduino.h>
-#include "Program.h"
 #include "InstructionSet.h"
+
+const uint8_t MAX_PROGRAM_INSTRUCTIONS = 16; // Maximum number of instructions a program can have
+const uint8_t MAX_PROGRAM_VARIABLES = 8;     // Maximum number of variables a program can have
+
+// Function declarations
+bool isValidProgramIndex(uint8_t programIndex, const char* errorContext);
+bool isValidInstructionIndex(uint8_t instructionIndex, const char* errorContext);
+void printErrorMessage(const char* errorContext, const char* errorMessage);
+
+// Data structure for a single program variable that can be modified by the user before programming into RAM
+struct ProgramVariable {
+    ProgramVariable() : name(nullptr), address(0), value(0) {}
+    ProgramVariable(const char* name, uint8_t address, int16_t value = 0) : name(name), address(address), value(value) {}
+    const char* name; // Human readable name for the variable
+    uint8_t address;  // RAM address to override
+    int16_t value;    // The current variable value
+};
+
+// Data structure for a single program instruction
+struct ProgramInstruction {
+    ProgramInstruction() : inst(NOP), arg(0) {} // Default to NOP for empty instructions
+    ProgramInstruction(Instruction inst, int8_t arg = 0) : inst(inst), arg(arg) {}
+    Instruction inst; // The instruction type
+    int8_t arg;       // The instruction argument (if applicable)
+};
+
+// The data structure for a full program with
+struct Program {
+    const char* name;                                          // Human readable program name
+    bool destructive;                                          // Whether the program is destructive and will alter RAM values that require reprogramming after each use
+    ProgramVariable variables[MAX_PROGRAM_VARIABLES];          // List of program variables
+    ProgramInstruction instructions[MAX_PROGRAM_INSTRUCTIONS]; // List of program instructions
+};
 
 // List of all the programs that can be loaded into RAM and executed by the computer
 Program PROGRAMS[] = {
@@ -29,10 +61,10 @@ Program PROGRAMS[] = {
             {JNZ, 0},    // 7: Jump to the LOOP instruction if the new counter is not zero
             // End of the Program
             {DSM, 11},   // 8: Display the product to the numeric display
-            {HLT},       // 9: Halt execution
+            {HLT, 0},       // 9: Halt execution
             // Values
-            {8},         // 10: counter (Always starts at 8)
-            {0},         // 11: product (Initialized to 0)
+            {NOP, 8},         // 10: counter (Always starts at 8)
+            {NOP, 0},         // 11: product (Initialized to 0)
         },
     },
     {
@@ -56,7 +88,7 @@ Program PROGRAMS[] = {
             {JMP, 4},  // 7: Jump to SUB_D if the subtraction resulted in a positive number
             // END: Display the largest divisor and halt execution
             {DSM, 11}, // 8: Display the divisor value
-            {HLT},     // 9: Halt execution
+            {HLT, 0},     // 9: Halt execution
         },
     },
     {
@@ -81,7 +113,7 @@ Program PROGRAMS[] = {
             {JMP, 5},  // 8: Jump to SUB_D if the subtraction resulted in a positive number
             // END: Display the smallest divisor and halt execution
             {DSM, 11}, // 9: Display the divisor value
-            {HLT},     // 10: Halt execution
+            {HLT, 0},     // 10: Halt execution
         },
     },
     {
@@ -110,7 +142,7 @@ Program PROGRAMS[] = {
             {JNZ, 5},  // 9: Jump back to LOOP if the loop counter is not zero
             // END:
             {DSM, 12}, // 10: Display the bit count value
-            {HLT},     // 11: Halt execution
+            {HLT, 0},     // 11: Halt execution
         }
     }
 };
@@ -160,7 +192,7 @@ byte getProgramInstructionByte(uint8_t programIndex, uint8_t instructionIndex) {
 }
 
 // Updates the value of a program variable
-void setProgramVariable(uint8_t programIndex, uint8_t variableIndex, int8_t value) {
+void setProgramVariable(uint8_t programIndex, uint8_t variableIndex, int16_t value) {
     if (
         !isValidProgramIndex(programIndex, "setProgramVariable") ||
         !isValidInstructionIndex(variableIndex, "setProgramVariable")
@@ -169,12 +201,12 @@ void setProgramVariable(uint8_t programIndex, uint8_t variableIndex, int8_t valu
     }
     // Validate variable index for the specific program
     if (PROGRAMS[programIndex].variables[variableIndex].name == nullptr) {
-        printErrorMessage("setProgramVariable", "Cannot set a program variable that does not exist");
+        // Error: cannot set a program variable that does not exist
         return;
     }
     // Validate the value
     if (value < -128 || value > 255) {
-        printErrorMessage("setProgramVariable", "Program variable value must be a valid signed or unsigned 8 bit value");
+        // Error: invalid program variable value
         return;
     }
     // Set the value and return
@@ -184,7 +216,7 @@ void setProgramVariable(uint8_t programIndex, uint8_t variableIndex, int8_t valu
 // Validate the program index
 bool isValidProgramIndex(uint8_t programIndex, const char* errorContext) {
     if (programIndex >= NUM_PROGRAMS) {
-        printErrorMessage(errorContext, "Invalid program index");
+        // Error: invalid program index
         return false;
     }
     return true;
@@ -193,18 +225,10 @@ bool isValidProgramIndex(uint8_t programIndex, const char* errorContext) {
 // Validate the program instruction index
 bool isValidInstructionIndex(uint8_t instructionIndex, const char* errorContext) {
     if (instructionIndex >= MAX_PROGRAM_INSTRUCTIONS) {
-        printErrorMessage(errorContext, "Invalid instruction index");
+        // Error: invalid instruction index
         return false;
     }
     return true;
-}
-
-// Prints an error message to the serial console with the error context
-void printErrorMessage(const char* errorContext, const char* errorMessage) {
-    Serial.print("ERROR (");
-    Serial.print(errorContext);
-    Serial.print("): ");
-    Serial.println(errorMessage);
 }
 
 #endif // PROGRAMS_H

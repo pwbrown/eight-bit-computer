@@ -1,11 +1,19 @@
 #include "Output.h"
 #include "Settings.h" // Pin definitions and control bit values
 
+using namespace Output;
+
+// Local variables
+uint8_t ramAddress = 0;
+uint8_t ramValue = 0;
+bool pressingResetButton = false;
+bool enablingRamWrite = false;
+
 // Setup all output controller pins and initial states
 void Output::setup() {
     // Setup shift register enable pins and set them to disabled by default
-    disableDataOutput();
-    disableControlOutput();
+    setDataOutput(false);
+    setControlOutput(false);
     pinMode(DATA_ENABLE_PIN, OUTPUT);
     pinMode(CTRL_ENABLE_PIN, OUTPUT);
 
@@ -49,27 +57,15 @@ void Output::update() {
 }
 
 // Enable data output
-void Output::enableDataOutput() {
+void Output::setDataOutput(bool enable) {
     // Active LOW enable pin
-    digitalWrite(DATA_ENABLE_PIN, LOW);
-}
-
-// Disable data output
-void Output::disableDataOutput() {
-    // Active LOW enable pin
-    digitalWrite(DATA_ENABLE_PIN, HIGH);
+    digitalWrite(DATA_ENABLE_PIN, enable ? LOW : HIGH);
 }
 
 // Enable control output
-void Output::enableControlOutput() {
+void Output::setControlOutput(bool enable) {
     // Active LOW enable pin
-    digitalWrite(CTRL_ENABLE_PIN, LOW);
-}
-
-// Disable control output
-void Output::disableControlOutput() {
-    // Active LOW enable pin
-    digitalWrite(CTRL_ENABLE_PIN, HIGH);
+    digitalWrite(CTRL_ENABLE_PIN, enable ? LOW : HIGH);
 }
 
 // Set the static ram address

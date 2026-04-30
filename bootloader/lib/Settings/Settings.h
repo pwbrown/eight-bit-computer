@@ -20,4 +20,10 @@
 #define CTRL__RAM_WRITE_MUX_STROBE_BIT 2 // Connected to the RAM write multiplexer's strobe signal pin
 #define CTRL__RAM_ADDR_REG_ENABLE_BIT 3  // Connected to the RAM address register's output enable pin
 
+// Screen settings
+#define SCREEN_ADDRESS 0x3C // I2C address of the OLED screen
+
+// Behavior settings
+#define BUTTON_HOLD_THRESHOLD_MS 500 // Time in milliseconds to consider a button as "held"
+
 #endif // SETTINGS_H
