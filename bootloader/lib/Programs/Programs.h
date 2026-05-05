@@ -7,9 +7,15 @@
 const uint8_t MAX_PROGRAM_INSTRUCTIONS = 16; // Maximum number of instructions a program can have
 const uint8_t MAX_PROGRAM_VARIABLES = 8;     // Maximum number of variables a program can have
 
+const char* VARIABLE_ASSIGN = " = ";
+const int VARIABLE_ASSIGN_LENGTH = strlen(VARIABLE_ASSIGN);
+const char* VARIABLE_SEPERATOR = ", ";
+const int VARIABLE_SEPERATOR_LENGTH = strlen(VARIABLE_SEPERATOR);
+
 // Function declarations
 bool isValidProgramIndex(uint8_t programIndex, const char* errorContext);
 bool isValidInstructionIndex(uint8_t instructionIndex, const char* errorContext);
+int getVariablePrintLength(const char* name, int16_t value);
 
 // Data structure for a single program variable that can be modified by the user before programming into RAM
 struct ProgramVariable {
@@ -18,6 +24,15 @@ struct ProgramVariable {
     const char* name; // Human readable name for the variable
     uint8_t address;  // RAM address to override
     int16_t value;    // The current variable value
+
+    // Returns a string representation of the variable in the format "name = value" (must be deallocated by caller)
+    char* print() {
+        int length = getVariablePrintLength(name, value);
+        char* buf = (char*)malloc(length + 1); // +1 for null terminator
+        sprintf(buf, "%s%s%d", name, VARIABLE_ASSIGN, value);
+        buf[length] = '\0'; // Null terminate the string
+        return buf;
+    }
 };
 
 // Data structure for a single program instruction
@@ -34,6 +49,39 @@ struct Program {
     bool destructive;                                          // Whether the program is destructive and will alter RAM values that require reprogramming after each use
     ProgramVariable variables[MAX_PROGRAM_VARIABLES];          // List of program variables
     ProgramInstruction instructions[MAX_PROGRAM_INSTRUCTIONS]; // List of program instructions
+
+    /** Returns a string representation of all variables in the format "name = value[, name = value]" */
+    char* printVariables() {
+        int usedVariables = 0;
+        int totalLength = 0;
+        for (int i = 0; i < MAX_PROGRAM_VARIABLES; i += 1) {
+            if (variables[i].name != nullptr) {
+                usedVariables += 1;
+                totalLength += getVariablePrintLength(variables[i].name, variables[i].value);
+            } else {
+                break; // Assume variables are defined in order
+            }
+        }
+        /** Append the seperator(s) to the total length */
+        if (usedVariables > 1) {
+            totalLength += VARIABLE_SEPERATOR_LENGTH * (usedVariables - 1);
+        }
+        char* buf = (char*)malloc(totalLength + 1);
+        buf[0] = '\0'; // Initialize the buffer as an empty string
+        /** Append the variables to the buffer */
+        for (int i = 0; i < usedVariables; i += 1) {
+            /** Append the seperator if not the first variable */
+            if (i > 0) {
+                strcat(buf, VARIABLE_SEPERATOR);
+            }
+            /** Generate, append, and then destroy the variable string */
+            char* variableString = variables[i].print();
+            strcat(buf, variableString);
+            free(variableString);
+        }
+        buf[totalLength] = '\0'; // Null terminate the string
+        return buf;
+    }
 };
 
 // List of all the programs that can be loaded into RAM and executed by the computer
@@ -228,6 +276,11 @@ bool isValidInstructionIndex(uint8_t instructionIndex, const char* errorContext)
         return false;
     }
     return true;
+}
+
+// Return the length of a variable's print string
+int getVariablePrintLength(const char* name, int16_t value) {
+    return snprintf(NULL, 0, "%s%s%d", name, VARIABLE_ASSIGN, value); // Get the length of the string that would be printed for the variable
 }
 
 #endif // PROGRAMS_H

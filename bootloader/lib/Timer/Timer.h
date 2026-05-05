@@ -25,7 +25,7 @@ class Timer {
         explicit operator bool() {
             auto now = time();
             if (now - previous >= interval) {
-                previous += interval;
+                previous = now;
                 return true;
             }
             return false;

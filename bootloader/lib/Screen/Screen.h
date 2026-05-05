@@ -10,7 +10,7 @@ namespace Screen {
     void clear();  // Clear the screen contents
 
     void drawCornerLabel(Corner corner, const char* label);
-    void drawMiddleLabel(const char* label);
+    void drawMiddleLabel(const char* label, bool top = true);
 }
 
 #endif // SCREEN_H
