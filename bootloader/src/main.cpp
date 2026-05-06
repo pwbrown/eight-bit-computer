@@ -2,7 +2,8 @@
 #include "Controller.h"
 
 /** Setup function (runs once at startup) */
-void setup() {
+void setup()
+{
   // Initialize serial communication for debugging (baud rate must match the platformio.ini file)
   Serial.begin(57600);
 
@@ -10,6 +11,7 @@ void setup() {
 }
 
 /** Main loop function (runs repeatedly after setup) */
-void loop() {
+void loop()
+{
   Controller::update();
 }

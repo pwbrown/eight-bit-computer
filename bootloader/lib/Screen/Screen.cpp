@@ -21,42 +21,49 @@ uint8_t blCurrentLength = 0;
 uint8_t brCurrentLength = 0;
 
 // Setup the screen hardware
-void Screen::setup() {
+void Screen::setup()
+{
     display.begin(&Adafruit128x64, SCREEN_ADDRESS);
     display.setFont(Adafruit5x7);
     clear();
 }
 
 // Clear the screen contents
-void Screen::clear() {
+void Screen::clear()
+{
     display.clear();
 }
 
 // Draws the label in a specific corner of the screen
-void Screen::drawCornerLabel(Corner corner, const char* label) {
+void Screen::drawCornerLabel(Corner corner, const char *label)
+{
     // Set text size and calculate text bounds based on the text size
     display.set1X();
 
     uint8_t labelLength = strlen(label);
     uint8_t labelWidthPx = display.fieldWidth(labelLength);
 
-    uint8_t col = 0;   // Column in pixels
-    uint8_t row = 0;   // Row based on character height (not pixels)
-    if (corner == BL || corner == BR) {
+    uint8_t col = 0; // Column in pixels
+    uint8_t row = 0; // Row based on character height (not pixels)
+    if (corner == BL || corner == BR)
+    {
         row = display.displayRows() - 1; // Align text to the bottom edge
     }
 
     // Clear any existing text
     int currentLabelLength = getCurrentLabelLength(corner);
-    if (currentLabelLength > 0) {
-        if (corner == TR || corner == BR) {
+    if (currentLabelLength > 0)
+    {
+        if (corner == TR || corner == BR)
+        {
             col = display.displayWidth() - display.fieldWidth(currentLabelLength) - 1;
         }
         display.clearField(col, row, currentLabelLength);
     }
 
     // Draw the new text and update the current label length
-    if (corner == TR || corner == BR) {
+    if (corner == TR || corner == BR)
+    {
         col = display.displayWidth() - labelWidthPx - 1; // Align text to the right edge
     }
 
@@ -70,16 +77,18 @@ void Screen::drawCornerLabel(Corner corner, const char* label) {
 }
 
 // Draws the label in the middle of the screen
-void Screen::drawMiddleLabel(const char* label, bool top) {
+void Screen::drawMiddleLabel(const char *label, bool top)
+{
     // Set text size and calculate text bounds based on the text size
     display.set1X();
     uint8_t labelLength = strlen(label);
     uint8_t labelWidthPx = display.fieldWidth(labelLength);
-    uint8_t row = display.displayRows() / 2 - 1; // Centered vertically
+    uint8_t row = display.displayRows() / 2 - 1;                     // Centered vertically
     uint8_t col = (display.displayWidth() / 2) - (labelWidthPx / 2); // Centered horizontally
 
     // Move down a row if we are not on the top label
-    if (!top) {
+    if (!top)
+    {
         row += 1;
     }
 
@@ -92,21 +101,30 @@ void Screen::drawMiddleLabel(const char* label, bool top) {
 }
 
 // Get the length of the current label in a corner
-uint8_t getCurrentLabelLength(Corner corner) {
-    return corner == TL ? tlCurrentLength :
-           corner == TR ? trCurrentLength :
-           corner == BL ? blCurrentLength : brCurrentLength;
+uint8_t getCurrentLabelLength(Corner corner)
+{
+    return corner == TL ? tlCurrentLength : corner == TR ? trCurrentLength
+                                        : corner == BL   ? blCurrentLength
+                                                         : brCurrentLength;
 }
 
 // Set the length of the current label in a corner
-void setCurrentLabelLength(Corner corner, uint8_t length) {
-    if (corner == TL) {
+void setCurrentLabelLength(Corner corner, uint8_t length)
+{
+    if (corner == TL)
+    {
         tlCurrentLength = length;
-    } else if (corner == TR) {
+    }
+    else if (corner == TR)
+    {
         trCurrentLength = length;
-    } else if (corner == BL) {
+    }
+    else if (corner == BL)
+    {
         blCurrentLength = length;
-    } else if (corner == BR) {
+    }
+    else if (corner == BR)
+    {
         brCurrentLength = length;
     }
 }

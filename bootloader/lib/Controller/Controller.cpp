@@ -4,10 +4,10 @@
 #include "Output.h"
 #include "Input.h"
 #include "Timer.h"
-#include "SharedTypes.h"
+#include "Types.h"
 
 using namespace Controller;
-using namespace SharedTypes;
+using namespace Types;
 
 // Function declarations for internal use
 void handleNextWriteStep();
@@ -37,8 +37,8 @@ Timer<millis> errorDisplayTimeout = Timer<millis>();
 // Draws the currently select program index name and variables to the middle label
 void drawSelectedProgramInListView()
 {
-  Screen::drawMiddleLabel(PROGRAMS[currentProgramIndex].name);
-  char *variablesString = PROGRAMS[currentProgramIndex].printVariables();
+  Screen::drawMiddleLabel(PROGRAMS[currentProgramIndex].getName());
+  char *variablesString = PROGRAMS[currentProgramIndex].getVariablesString();
   Screen::drawMiddleLabel(variablesString, false);
   free(variablesString);
 }
@@ -57,9 +57,12 @@ void switchToProgramListView()
 // Draws the currently selected program variable name and value to the middle bottom label
 void drawSelectedProgramVariableInEditorView()
 {
-  char *variableString = PROGRAMS[currentProgramIndex].variables[currentVariableIndex].print();
-  Screen::drawMiddleLabel(variableString, false);
-  free(variableString);
+  char *variableString = PROGRAMS[currentProgramIndex].getVariableString(currentVariableIndex);
+  if (variableString != nullptr)
+  {
+    Screen::drawMiddleLabel(variableString, false);
+    free(variableString);
+  }
 }
 
 // Handles switching to and drawing the program editor view
@@ -78,8 +81,10 @@ void switchToProgramEditorView()
 void handleProgramListView()
 {
   // Handle the error display
-  if (isDisplayingError) {
-    if (Input::isPressingButton(TR) || errorDisplayTimeout) {
+  if (isDisplayingError)
+  {
+    if (Input::isPressingButton(TR) || errorDisplayTimeout)
+    {
       isDisplayingError = false;
       // Restore labels
       Screen::drawCornerLabel(TR, "Write");
@@ -116,7 +121,7 @@ void handleProgramListView()
     startProgramWriteSequence();
   }
   // Switch to the program editor view
-  else if (Input::isPressingButton(BR) && PROGRAMS[currentProgramIndex].variables[0].name != nullptr)
+  else if (Input::isPressingButton(BR) && PROGRAMS[currentProgramIndex].getVariableCount() > 0)
   {
     switchToProgramEditorView();
   }
@@ -126,43 +131,44 @@ void handleProgramEditorView()
 {
   // Adjust current variable value and display it to the screen
   if (
-    Input::isPressingButton(TL) ||
-    Input::isPressingButton(BL) ||
-    Input::isHoldingButton(TL) ||
-    Input::isHoldingButton(BL)
-  ) {
+      Input::isPressingButton(TL) ||
+      Input::isPressingButton(BL) ||
+      Input::isHoldingButton(TL) ||
+      Input::isHoldingButton(BL))
+  {
     bool isIncrementing = Input::isPressingButton(TL) || Input::isHoldingButton(TL);
     bool isHolding = Input::isHoldingButton(TL) || Input::isHoldingButton(BL);
-    if (!isHolding || adjustmentTimer) {
-      int16_t newValue = PROGRAMS[currentProgramIndex].variables[currentVariableIndex].value + (isIncrementing ? 1 : -1);
-      if (newValue > 255) {
+    if (!isHolding || adjustmentTimer)
+    {
+      int16_t newValue = PROGRAMS[currentProgramIndex].getVariableValue(currentVariableIndex) + (isIncrementing ? 1 : -1);
+      if (newValue > 255)
+      {
         newValue = -128; // Wrap around to minimum value
-      } else if (newValue < -128) {
+      }
+      else if (newValue < -128)
+      {
         newValue = 255; // Wrap around to maximum value
       }
-      setProgramVariable(currentProgramIndex, currentVariableIndex, newValue);
+      PROGRAMS[currentProgramIndex].setVariableValue(currentVariableIndex, newValue);
       drawSelectedProgramVariableInEditorView();
     }
-
   }
   // Switch to the next variable
-  else if (Input::isPressingButton(TR)) {
-    uint8_t nextVariableIndex = (currentVariableIndex + 1) % MAX_PROGRAM_VARIABLES; // Increment variable index and wrap around using modulo
-    // Wrap back to first variable if we hit an unused variable
-    if (PROGRAMS[currentProgramIndex].variables[nextVariableIndex].name == nullptr) {
-      nextVariableIndex = 0;
-    }
-    currentVariableIndex = nextVariableIndex;
+  else if (Input::isPressingButton(TR))
+  {
+    currentVariableIndex = (currentVariableIndex + 1) % PROGRAMS[currentProgramIndex].getVariableCount(); // Increment variable index and wrap around using modulo
     drawSelectedProgramVariableInEditorView();
   }
   // Go back to the program list view
-  else if (Input::isPressingButton(BR)) {
+  else if (Input::isPressingButton(BR))
+  {
     switchToProgramListView();
   }
 }
 
 // Display an error message in the middle of the screen for a few seconds
-void displayError(const char* errorMessage) {
+void displayError(const char *errorMessage)
+{
   isDisplayingError = true;
   errorDisplayTimeout.start(3000); // Display the error message for 3 seconds
   Screen::drawCornerLabel(TR, "Accept");
@@ -174,10 +180,13 @@ void displayError(const char* errorMessage) {
 void startProgramWriteSequence()
 {
   // Check computer state first
-  if (!Input::isClockInManualMode()) {
+  if (!Input::isClockInManualMode())
+  {
     displayError("Set CLOCK to MAN");
     return;
-  } else if (!Input::isRamInRunMode()) {
+  }
+  else if (!Input::isRamInRunMode())
+  {
     displayError("Set RAM to RUN");
     return;
   }
@@ -267,7 +276,7 @@ void handleNextWriteStep()
     // Step 3a: Handle selecting the current RAM address and RAM value
     if (isCurrentStep(step++))
     {
-      byte instructionBin = getProgramInstructionByte(currentProgramIndex, currentWriteAddress);
+      byte instructionBin = PROGRAMS[currentProgramIndex].getInstructionByte(currentWriteAddress);
       Output::setRamAddress(currentWriteAddress);
       Output::setRamValue(instructionBin);
       Output::update();

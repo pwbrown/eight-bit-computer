@@ -3,7 +3,8 @@
 
 #include <Arduino.h>
 
-namespace Output {
+namespace Output
+{
     void setup();  // Initialize output shift register pins
     void update(); // Update the shift registers with the current data values and control settings
 

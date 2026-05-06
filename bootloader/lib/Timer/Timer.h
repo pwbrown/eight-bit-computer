@@ -10,31 +10,34 @@
 using timefunction = unsigned long (*)();
 
 template <timefunction time = micros>
-class Timer {
-    public:
-        /** Starts the timer at the given interval */
-        void start(unsigned long newInterval = 0) {
-            interval = newInterval;
-            previous = time();
-        }
+class Timer
+{
+public:
+    /** Starts the timer at the given interval */
+    void start(unsigned long newInterval = 0)
+    {
+        interval = newInterval;
+        previous = time();
+    }
 
-        /**
-         * boolean operator overload to automatically check the timer for an interval
-         * trigger and progress the previous value for the next check
-         */
-        explicit operator bool() {
-            auto now = time();
-            if (now - previous >= interval) {
-                previous = now;
-                return true;
-            }
-            return false;
+    /**
+     * boolean operator overload to automatically check the timer for an interval
+     * trigger and progress the previous value for the next check
+     */
+    explicit operator bool()
+    {
+        auto now = time();
+        if (now - previous >= interval)
+        {
+            previous = now;
+            return true;
         }
+        return false;
+    }
 
-    private:
-        unsigned long interval = 0;
-        unsigned long previous = 0;
+private:
+    unsigned long interval = 0;
+    unsigned long previous = 0;
 };
-
 
 #endif // TIMER_H

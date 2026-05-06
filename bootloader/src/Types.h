@@ -1,8 +1,10 @@
 #ifndef SHARED_TYPES_H
 #define SHARED_TYPES_H
 
-namespace SharedTypes {
-    enum Corner {
+namespace Types
+{
+    enum Corner
+    {
         TL, // Top Left
         TR, // Top Right
         BL, // Bottom Left

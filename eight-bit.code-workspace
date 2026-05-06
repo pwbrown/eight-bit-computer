@@ -21,7 +21,9 @@
 			"path": "examples"
 		}
 	],
-	"settings": {},
+	"settings": {
+		"editor.formatOnSave": true,
+	},
 	"extensions": {
 		"recommendations": [
 			"platformio.platformio-ide"

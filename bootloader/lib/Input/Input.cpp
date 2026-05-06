@@ -12,7 +12,8 @@ Button ramModeSwitch = Button(RAM_MODE_PIN);
 Button clockModeSwitch = Button(CLOCK_MODE_PIN);
 
 // Setup all input buttons and switches
-void Input::setup() {
+void Input::setup()
+{
     // Initialize all buttons and switches
     topLeftButton.begin();
     topRightButton.begin();
@@ -23,7 +24,8 @@ void Input::setup() {
 }
 
 // Update the internal state of all buttons and switches
-void Input::update() {
+void Input::update()
+{
     topLeftButton.update();
     topRightButton.update();
     bottomLeftButton.update();
@@ -33,61 +35,69 @@ void Input::update() {
 }
 
 // Returns the button state for a given corner
-Button::State Input::getButtonState(Corner corner) {
-    switch (corner) {
-        case TL:
-            return topLeftButton.getState();
-        case TR:
-            return topRightButton.getState();
-        case BL:
-            return bottomLeftButton.getState();
-        case BR:
-            return bottomRightButton.getState();
-        default:
-            return Button::Released; // Default to released for invalid button IDs
+Button::State Input::getButtonState(Corner corner)
+{
+    switch (corner)
+    {
+    case TL:
+        return topLeftButton.getState();
+    case TR:
+        return topRightButton.getState();
+    case BL:
+        return bottomLeftButton.getState();
+    case BR:
+        return bottomRightButton.getState();
+    default:
+        return Button::Released; // Default to released for invalid button IDs
     }
 }
 
 // Returns the time in milliseconds that the button has been in a stable state for a given corner
-unsigned long Input::getButtonStableTime(Corner corner) {
-    switch (corner) {
-        case TL:
-            return topLeftButton.stableTime();
-        case TR:
-            return topRightButton.stableTime();
-        case BL:
-            return bottomLeftButton.stableTime();
-        case BR:
-            return bottomRightButton.stableTime();
-        default:
-            return 0; // Default to 0 for invalid button IDs
+unsigned long Input::getButtonStableTime(Corner corner)
+{
+    switch (corner)
+    {
+    case TL:
+        return topLeftButton.getStableTime();
+    case TR:
+        return topRightButton.getStableTime();
+    case BL:
+        return bottomLeftButton.getStableTime();
+    case BR:
+        return bottomRightButton.getStableTime();
+    default:
+        return 0; // Default to 0 for invalid button IDs
     }
 }
 
 // Detects if a button is being pressed (transitioning from released to pressed)
-bool Input::isPressingButton(Corner corner) {
+bool Input::isPressingButton(Corner corner)
+{
     return getButtonState(corner) == Button::Pressing;
 }
 
 // Detects if a button is being pressed beyond a certain time threshold
-bool Input::isHoldingButton(Corner corner) {
+bool Input::isHoldingButton(Corner corner)
+{
     return (
         getButtonState(corner) == Button::Pressed &&
-        getButtonStableTime(corner) >= BUTTON_HOLD_THRESHOLD_MS
-    );
+        getButtonStableTime(corner) >= BUTTON_HOLD_THRESHOLD_MS);
 }
 
 // Detects if a button is being released (transitioning from pressed to released)
-bool Input::isReleasingButton(Corner corner) {
+bool Input::isReleasingButton(Corner corner)
+{
     return getButtonState(corner) == Button::Releasing;
 }
 
 // Indicates if the RAM mode switch is in RUN mode (vs. PROGRAM)
-bool Input::isRamInRunMode() {
+bool Input::isRamInRunMode()
+{
     return ramModeSwitch.getState() == Button::Pressed;
 }
 
 // Indicates if the clock mode switch is in MANUAL mode (vs. AUTOMATIC)
-bool Input::isClockInManualMode() {
+bool Input::isClockInManualMode()
+{
     return clockModeSwitch.getState() == Button::Pressed;
 }

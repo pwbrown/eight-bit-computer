@@ -10,7 +10,8 @@ bool pressingResetButton = false;
 bool enablingRamWrite = false;
 
 // Setup all output controller pins and initial states
-void Output::setup() {
+void Output::setup()
+{
     // Setup shift register enable pins and set them to disabled by default
     setDataOutput(false);
     setControlOutput(false);
@@ -30,13 +31,14 @@ void Output::setup() {
 }
 
 // Updates the values of the shift registers based on the current static variable values
-void Output::update() {
+void Output::update()
+{
     // Push the RAM address first since it's the furthest down the shift register chain
     shiftOut(SHIFT_DATA_PIN, SHIFT_CLOCK_PIN, MSBFIRST, ramAddress);
-    
+
     // Push the RAM value next
     shiftOut(SHIFT_DATA_PIN, SHIFT_CLOCK_PIN, MSBFIRST, ramValue);
-    
+
     // Construct the control byte
     uint8_t controlByte = 0;
     // Control word address (A10) bit (always set to 1)
@@ -57,33 +59,39 @@ void Output::update() {
 }
 
 // Enable data output
-void Output::setDataOutput(bool enable) {
+void Output::setDataOutput(bool enable)
+{
     // Active LOW enable pin
     digitalWrite(DATA_ENABLE_PIN, enable ? LOW : HIGH);
 }
 
 // Enable control output
-void Output::setControlOutput(bool enable) {
+void Output::setControlOutput(bool enable)
+{
     // Active LOW enable pin
     digitalWrite(CTRL_ENABLE_PIN, enable ? LOW : HIGH);
 }
 
 // Set the static ram address
-void Output::setRamAddress(uint8_t address) {
+void Output::setRamAddress(uint8_t address)
+{
     ramAddress = address;
 }
 
 // Set the static ram value
-void Output::setRamValue(uint8_t value) {
+void Output::setRamValue(uint8_t value)
+{
     ramValue = value;
 }
 
 // Set the reset button state
-void Output::setResetButton(bool pressed) {
+void Output::setResetButton(bool pressed)
+{
     pressingResetButton = pressed;
 }
 
 // Set the RAM write enable state
-void Output::setRamWrite(bool enabled) {
+void Output::setRamWrite(bool enabled)
+{
     enablingRamWrite = enabled;
 }

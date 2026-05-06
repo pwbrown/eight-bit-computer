@@ -70,8 +70,10 @@ void setup()
   byte blank = COMMON_CATHODE ? 0 : 0xFF; // All segments off
 
   int gIndex = 0;
-  for (int i = 0; i < 8; i += 1) {
-    if (SEGMENT_OUTPUT_ORDER[i] == G) {
+  for (int i = 0; i < 8; i += 1)
+  {
+    if (SEGMENT_OUTPUT_ORDER[i] == G)
+    {
       gIndex = i;
       break;
     }
@@ -112,18 +114,12 @@ void setup()
     int onesPlace = digits[abs(value) % 10];
     writeEEPROMByte(byte(value) + 1024, onesPlace);
     // Write the tens place to the next 256 bytes
-    int tensPlace = (
-      value > -10 && value < 0 ? negative :
-      value >= 0 && value < 10 ? blank :
-      digits[(abs(value) / 10) % 10]
-    );
+    int tensPlace = (value > -10 && value < 0 ? negative : value >= 0 && value < 10 ? blank
+                                                                                    : digits[(abs(value) / 10) % 10]);
     writeEEPROMByte(byte(value) + 1280, tensPlace);
     // Write the hundreds place to the next 256 bytes
-    int hundredsPlace = (
-      value > -100 && value <= -10 ? negative :
-      value > -10 && value < 100 ? blank :
-      digits[(abs(value) / 100) % 10]
-    );
+    int hundredsPlace = (value > -100 && value <= -10 ? negative : value > -10 && value < 100 ? blank
+                                                                                              : digits[(abs(value) / 100) % 10]);
     writeEEPROMByte(byte(value) + 1536, hundredsPlace);
     // Write negative sign where applicable for the remaining 256 bytes
     writeEEPROMByte(byte(value) + 1792, value <= -100 ? negative : blank);
