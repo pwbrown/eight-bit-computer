@@ -1,3 +1,18 @@
+/**
+ * This file is a custom version of the EEPROM programming logic that
+ * writes to 2 different EEPROMS that hold the control logic for the 8
+ * bit computer. It is inspired by the original Ben Eater implementation
+ * except that the EEPROMProgrammer is moved to a shared library (also
+ * used by the output EEPROM) and it uses a custom declaration of the full
+ * instruction set stored in a shared library (also used by the bootloader)
+ * with a slightly different approach to handling conditional jump instructions.
+ * This implementation also writes all 0s to the second half of the chip so
+ * that the bootloader can set the most significant address bit to 1
+ * to "disable" the control word during the program write sequence.
+ *
+ * Author: Philip Brown (https://github.com/pwbrown)
+ */
+
 #include <Arduino.h>
 #include "EEPROMProgrammer.h"
 #include "InstructionSet.h"
@@ -15,7 +30,7 @@ void setup()
   Serial.begin(57600);
 
   // Setup all EEPROM pins
-  setupEEPROMPins();
+  EEPROMProgrammer::setupPins();
 
   // Determine instruction position for each of the jump instructions
   int JMP_INDEX = getInstructionIndexByType(JMP);
@@ -81,13 +96,13 @@ void setup()
     }
 
     // Write the value to the EEPROM at the address
-    writeEEPROMByte(addr, value);
+    EEPROMProgrammer::writeByte(addr, value);
   }
   Serial.println();
 
   delay(1000);
 
-  printEEPROMContentsToSerial(2048);
+  EEPROMProgrammer::printContentsToSerial(2048);
 }
 
 void loop()

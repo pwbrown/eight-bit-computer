@@ -1,3 +1,11 @@
+/**
+ * The Output namespace contains functions for interacting with all bootloader
+ * outputs via the shift register chain, and provides helper functions for setting
+ * the values that will be pushed to the shift registers.
+ *
+ * Author: Philip Brown (https://github.com/pwbrown)
+ */
+
 #ifndef OUTPUT_H
 #define OUTPUT_H
 

@@ -1,3 +1,13 @@
+/**
+ * The Program class and its related structs provide a streamlined way to define
+ * programs that can be written to computer memory. Each program defines a list of instructions
+ * using the shared instruction set mnemonics. Programs can also define a list of variables
+ * that the bootloader is capable of editing at runtime so that users can run the same program
+ * with different inputs.
+ *
+ * Author: Philip Brown (https://github.com/pwbrown)
+ */
+
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
@@ -29,6 +39,9 @@ public:
     // Instruction definition
     struct Instruction
     {
+        Instruction() : type(NOP), argument(0) {}
+        Instruction(InstructionType type, int16_t argument = 0) : type(type), argument(argument) {}
+
         InstructionType type; // The instruction type
         int16_t argument;     // The instruction argument (if applicable)
     };

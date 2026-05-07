@@ -1,3 +1,12 @@
+/**
+ * The Input namespace contains functions for interacting with all bootloader
+ * inputs like buttons and switches, and provides helper functions for
+ * detecting positional button states like presses and timed holds and
+ * current computer switch states that are critical for program writing
+ *
+ * Author: Philip Brown (https://github.com/pwbrown)
+ */
+
 #ifndef INPUT_H
 #define INPUT_H
 

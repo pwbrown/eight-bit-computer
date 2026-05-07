@@ -1,11 +1,3 @@
-/**
- * Slightly modified version of the Arduino Helpers Button Class for
- * tracking the state of a button with debounce logic and timing information.
- * Author: Philip Brown
- * Original Author: Pieter Pas (https://github.com/tttapa)
- * Original Source: https://github.com/tttapa/Arduino-Helpers/blob/master/src/AH/Hardware/Button.cpp
- */
-
 #include "Button.h"
 
 // Initialize the static debounc time variable

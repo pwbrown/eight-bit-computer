@@ -1,14 +1,22 @@
-// Heavily modified version based on the original Arduino Helpers timer class
-// Author: Pieter Pas (https://github.com/tttapa)
-// Original source: https://github.com/tttapa/Arduino-Helpers/blob/master/src/AH/Timing/MillisMicrosTimer.hpp
+/**
+ * Modified version of the Arduino Helpers Timer class. This timer is non-blocking unlike
+ * the built in Arduino delay function so it can allow for complex timing logic while still
+ * detecting other actions like button presses.
+ *
+ * Author: Philip Brown (https://github.com/pwbrown)
+ * Original Author: Pieter Pas (https://github.com/tttapa)
+ * Original Source: https://github.com/tttapa/Arduino-Helpers/blob/master/src/AH/Timing/MillisMicrosTimer.hpp
+ */
 
 #ifndef TIMER_H
 #define TIMER_H
 
 #include <Arduino.h>
 
+// Definition for a time function (like millis or micros)
 using timefunction = unsigned long (*)();
 
+// Templated timer class that can use either millis or micros
 template <timefunction time = micros>
 class Timer
 {
@@ -20,11 +28,8 @@ public:
         previous = time();
     }
 
-    /**
-     * boolean operator overload to automatically check the timer for an interval
-     * trigger and progress the previous value for the next check
-     */
-    explicit operator bool()
+    /** Checks if the timer has reached the interval and updates the previous timestamp for the next check */
+    bool check()
     {
         auto now = time();
         if (now - previous >= interval)
@@ -36,8 +41,8 @@ public:
     }
 
 private:
-    unsigned long interval = 0;
-    unsigned long previous = 0;
+    unsigned long interval = 0; // Holds the interval duration (units based on the time function used)
+    unsigned long previous = 0; // Holds the timestamp of the last timer start or successful check (units based on the time function used)
 };
 
 #endif // TIMER_H

@@ -1,3 +1,13 @@
+/**
+ * This file is a custom version of the EEPROM programming logic for the
+ * quad 7-segment numeric display. It is inspired by the original Ben Eater
+ * code but moves the EEPROM Programmer logic to a shared library (also used by
+ * the control EEPROM) and uses a different methodology for declaring segments
+ * to allow for modifying module wiring with minimal changes to software.
+ *
+ * Author: Philip Brown (https://github.com/pwbrown)
+ */
+
 #include <Arduino.h>
 #include "EEPROMProgrammer.h"
 
@@ -58,7 +68,7 @@ void setup()
   Serial.begin(57600);
 
   // Setup all EEPROM pins
-  setupEEPROMPins();
+  EEPROMProgrammer::setupPins();
 
   // Initialize digits
   byte digits[10];
@@ -90,15 +100,15 @@ void setup()
     }
     // Write the ones place to the first 256 bytes
     int onesPlace = digits[value % 10];
-    writeEEPROMByte(value, onesPlace);
+    EEPROMProgrammer::writeByte(value, onesPlace);
     // Write the tens place to the next 256 bytes
     int tensPlace = value < 10 ? blank : digits[(value / 10) % 10];
-    writeEEPROMByte(value + 256, tensPlace);
+    EEPROMProgrammer::writeByte(value + 256, tensPlace);
     // Write the hundreds place to the next 256 bytes
     int hundredsPlace = value < 100 ? blank : digits[(value / 100) % 10];
-    writeEEPROMByte(value + 512, hundredsPlace);
+    EEPROMProgrammer::writeByte(value + 512, hundredsPlace);
     // Write blanks for the remaining 256 bytes
-    writeEEPROMByte(value + 768, blank);
+    EEPROMProgrammer::writeByte(value + 768, blank);
   }
 
   Serial.println();
@@ -112,21 +122,21 @@ void setup()
     }
     // Write the ones place to the first 256 bytes
     int onesPlace = digits[abs(value) % 10];
-    writeEEPROMByte(byte(value) + 1024, onesPlace);
+    EEPROMProgrammer::writeByte(byte(value) + 1024, onesPlace);
     // Write the tens place to the next 256 bytes
     int tensPlace = (value > -10 && value < 0 ? negative : value >= 0 && value < 10 ? blank
                                                                                     : digits[(abs(value) / 10) % 10]);
-    writeEEPROMByte(byte(value) + 1280, tensPlace);
+    EEPROMProgrammer::writeByte(byte(value) + 1280, tensPlace);
     // Write the hundreds place to the next 256 bytes
     int hundredsPlace = (value > -100 && value <= -10 ? negative : value > -10 && value < 100 ? blank
                                                                                               : digits[(abs(value) / 100) % 10]);
-    writeEEPROMByte(byte(value) + 1536, hundredsPlace);
+    EEPROMProgrammer::writeByte(byte(value) + 1536, hundredsPlace);
     // Write negative sign where applicable for the remaining 256 bytes
-    writeEEPROMByte(byte(value) + 1792, value <= -100 ? negative : blank);
+    EEPROMProgrammer::writeByte(byte(value) + 1792, value <= -100 ? negative : blank);
   }
   Serial.println();
 
-  printEEPROMContentsToSerial();
+  EEPROMProgrammer::printContentsToSerial();
 }
 
 // Arduino loop, not used for this purpose

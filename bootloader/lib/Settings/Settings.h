@@ -1,3 +1,10 @@
+/**
+ * Shared settings for all bootloader modules. Contains pin definitions,
+ * I2C settings, and other behavior settings.
+ *
+ * Author: Philip Brown (https://github.com/pwbrown)
+ */
+
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
@@ -24,6 +31,8 @@
 #define SCREEN_ADDRESS 0x3C // I2C address of the OLED screen
 
 // Behavior settings
-#define BUTTON_HOLD_THRESHOLD_MS 500 // Time in milliseconds to consider a button as "held"
+#define ADJUSTMENT_HOLD_DELAY_MS 50    // Time in milliseconds to wait before starting to auto-increment/decrement a variable when holding the Up/Down buttons
+#define BUTTON_HOLD_THRESHOLD_MS 500   // Time in milliseconds to consider a button as "held"
+#define ERROR_DISPLAY_DURATION_MS 3000 // Time in milliseconds to display error messages on the screen before automatically clearing them
 
 #endif // SETTINGS_H
