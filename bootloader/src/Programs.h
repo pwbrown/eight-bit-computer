@@ -65,7 +65,7 @@ Program PROGRAMS[] = {
             {NOP, 8}, // 10: counter (Always starts at 8)
             {NOP, 0}, // 11: product (Initialized to 0)
         }),
-    // Divide a value by another value using repeated subtraction of the divisor
+    // Divide a value by another value using repeated subtraction of the divisor (Does not work with negative numbers)
     Program("Divide (x / y)")
         .setVariables({
             {"x", 13, 4}, // Dividend
@@ -87,6 +87,7 @@ Program PROGRAMS[] = {
             {DSM, 12}, // 9: Display the quotient value on the numeric display
             {HLT, 0},  // 10: Halt execution
         }),
+    // TODO: Implement Modulo Operator
     // Determine the largest divisor of a number
     // Credit: https://theshamblog.com/programs-and-more-commands-for-the-ben-eater-8-bit-breadboard-computer/
     Program("Largest Divisor of x")
@@ -159,33 +160,6 @@ Program PROGRAMS[] = {
             {DSM, 12}, // 10: Display the bit count value
             {HLT, 0},  // 11: Halt execution
         }),
-    // Count the number of "0" bits that make up a given number in binary
-    Program("Count 0 Bits in x")
-        .setVariables({
-            {"x", 15, 0},
-        })
-        .setInstructions({
-            // SETUP:
-            // Copy the input number (x) into another memory spot for manipulation
-            {LDA, 15}, // 0: Load the input number into A register
-            {STA, 14}, // 1: Store A register in memory as a copy of x (xc)
-            // Set the loop counter to 8
-            {LDI, 8},  // 2: Load 8 into the A Register
-            {STA, 13}, // 3: Store A register in memory as the loop counter (l)
-            // Clear the bit count value in memory to prepare for counting
-            {CLR, 12}, // 4: Clears the bit count value (set to zero)
-            // LOOP:
-            // Double the copied value to shift one of its bits out to be evaluated
-            {DBL, 14}, // 5: Double (left shift) the copied value (xc)
-            {JC, 8},   // 6: Jump to SKIP (skip incrementing bit count) if the carried bit was not zero
-            {INX, 12}, // 7: Increment the bit count (b) if the carry bit was not set
-            // SKIP:
-            {DEX, 13}, // 8: Decrement the loop counter (l)
-            {JNZ, 5},  // 9: Jump back to LOOP if the loop counter is not zero
-            // END:
-            {DSM, 12}, // 10: Display the bit count value
-            {HLT, 0},  // 11: Halt execution
-        }),
     // Increments a value by the specified x value and displays the value on each iteration
     Program("Increment by x")
         .setVariables({
@@ -200,19 +174,57 @@ Program PROGRAMS[] = {
             {DSM, 5}, // 3: Display the current value on the numeric display
             {JMP, 1}, // 4: Start the loop again
         }),
-    // Decrements a value by the specified x value and displays the value on each iteration
-    Program("Decrement by x")
-        .setVariables({
-            {"x", 6, 1},
-        })
+    // Fibonacci Sequence: starts over once it reaches the highest number
+    Program("Fibonacci")
         .setInstructions({
-            // SETUP: Clear the value
-            {CLR, 5}, // 0: Clears the display value in RAM and puts 0 in the A register
-            // LOOP: Main decrement loop
-            {SUB, 6}, // 1: Subtract the decrement (x) value to the A register
-            {STA, 5}, // 2: Store the new display value
-            {DSM, 5}, // 3: Display the current value on the numeric display
-            {JMP, 1}, // 4: Start the loop again
+            // SETUP: Initialize x to 1
+            // Initialize x to 1
+            {LDI, 1},  // 0: Load 1 into A register
+            {STA, 13}, // 1: Store 1 into x value
+            // Load 0 to initialize y in the main loop
+            {LDI, 0}, // 2: Load 0 into A register
+            // LOOP: Main Sequence
+            // Save and display y
+            {STA, 14}, // 3: Store A register to y
+            {DSM, 14}, // 4: Display y on the numeric display
+            // Add y to x and display new x value
+            {LDA, 13}, // 5: Load x value into A register
+            {ADD, 14}, // 6: Add y to x
+            {STA, 13}, // 7: Store A register (sum) to x
+            {DSM, 13}, // 8: Display x on the numeric display
+            // Add x to y and check for the carry bit
+            {LDA, 14}, // 9: Load y into A register
+            {ADD, 13}, // 10: Add x to y
+            {JC, 0},   // 11: Jump to SETUP if the carry bit is set to start over
+            {JMP, 3},  // 12: Jump to LOOP to continue the sequence
+        }),
+    // Bounce jumps up to a target number (starts at 1) and back down to zero and
+    // every time it goes back down to zero, the target number increases by 1
+    // creating a bouncing effect. Once it the target exceeds 255, it will reset
+    Program("Bounce")
+        .setInstructions({
+            // SETUP: Initialize the target number to 1 and clear the bounce value
+            {LDI, 1},  // 0: Load 1 into the A register
+            {STA, 15}, // 1: Store 1 into the target
+            {CLR, 14}, // 2: Clear the bounce value
+            {DSM, 14}, // 3: Display the current bounce value (0)
+            // UP: Handles incrementing the bounce value until it hits the target
+            // Increment and display the bounce value
+            {INX, 14}, // 4: Increment the bounce value
+            {DSM, 14}, // 5: Display the bounce value
+            // Check if the bounch value equals the target value
+            {SUB, 15}, // 6: Subtract the target value from the bounce value
+            {JNZ, 4},  // 7: Jump back to UP if the difference is not zero
+            // DOWN: Handles decrementing the bounce value until it gets to 0
+            // Decrement and display the bounce value
+            {DEX, 14}, // 8: Decrement the bounce value
+            {DSM, 14}, // 9: Display the bounce value
+            // Check if the bounce value has hit zero
+            {JNZ, 8}, // 10: Jump back to DOWN if the bounce value is not zero
+            // NEXT: Handles setting up the next target value
+            {INX, 15}, // 11: Increment the target value
+            {JNC, 4},  // 12: Jump to UP if the target value has not overflown
+            {JMP, 0},  // 13: Jump to SETUP to restart the computer (or replace with HLT)
         }),
 };
 

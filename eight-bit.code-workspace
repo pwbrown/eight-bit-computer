@@ -15,10 +15,6 @@
 		{
 			"name": "Shared",
 			"path": "shared"
-		},
-		{
-			"name": "Examples",
-			"path": "examples"
 		}
 	],
 	"settings": {

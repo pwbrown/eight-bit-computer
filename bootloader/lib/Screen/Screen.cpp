@@ -126,37 +126,29 @@ void Screen::drawCornerLabel(Corner corner, const char *label)
     setCurrentLabelLength(corner, labelLengthInChars);
 }
 
-// Clears the text in the middle of the screen (either top or bottom)
-void Screen::clearMiddleLabel(bool top)
+// Clears the text in the middle of the screen (at the line offset)
+void Screen::clearMiddleLabel(int offset)
 {
-    // Calculate top middle row
-    int row = display.displayRows() / 2 - 1;
-    if (!top)
-    {
-        row += 1; // Move down a row for the bottom middle label
-    }
+    // Calculate the row in the middle of the screen and adjust by the line offset
+    int row = display.displayRows() / 2 - 1 + offset;
 
     // Clear the entire row
     display.clearField(0, row, display.displayWidth() / display.fieldWidth(1));
 }
 
-// Draws the label in the middle of the screen (either top or bottom). Clears the middle label first
-void Screen::drawMiddleLabel(const char *label, bool top)
+// Draws the label in the middle of the screen (at the line offset). Clears the middle label first
+void Screen::drawMiddleLabel(const char *label, int offset)
 {
     // Clear the middle label first
-    clearMiddleLabel(top);
+    clearMiddleLabel(offset);
 
     // Get the label length in characters and pixels
     uint8_t labelLengthInChars = strlen(label);
     uint8_t labelLengthInPixels = display.fieldWidth(labelLengthInChars);
 
     // Calculate the column (in pixels) and row (in character rows)
-    uint8_t row = display.displayRows() / 2 - 1;                            // Centered vertically
+    uint8_t row = display.displayRows() / 2 - 1 + offset;                   // Centered vertically (with offset adjustment)
     uint8_t col = (display.displayWidth() / 2) - (labelLengthInPixels / 2); // Centered horizontally
-    if (!top)
-    {
-        row += 1; // Move down a row for the bottom middle label
-    }
 
     // Set the cursor position and print the label to the screen
     display.setCursor(col, row);

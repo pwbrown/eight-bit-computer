@@ -22,8 +22,8 @@ namespace Screen
     void clearCornerLabel(Corner corner);                   // Clear the label in the specified corner
     void drawCornerLabel(Corner corner, const char *label); // Clear and draw a label in the specified corner
 
-    void clearMiddleLabel(bool top = true);                   // Clear the middle label (top or bottom)
-    void drawMiddleLabel(const char *label, bool top = true); // Clear and draw the middle label (top or bottom)
+    void clearMiddleLabel(int offset = 0);                   // Clear the middle label (at the line offset)
+    void drawMiddleLabel(const char *label, int offset = 0); // Clear and draw the middle label (at the line offset)
 }
 
 #endif // SCREEN_H

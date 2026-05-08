@@ -50,13 +50,29 @@ Timer<millis> writeTimer = Timer<millis>(); // Timer used by the write sequence 
 
 /********************** VIEW DRAWING ***************************/
 
+const char *PROGRESS_FORMAT = "%d/%d"; // Progress format string
+
+/** Builds a progress string using the format "${index}/${total}" */
+char *buildProgressString(int index, int total)
+{
+  int length = snprintf(NULL, 0, PROGRESS_FORMAT, index, total);
+  char *buf = (char *)malloc(length + 1); // +1 for null terminator
+  sprintf(buf, PROGRESS_FORMAT, index, total);
+  return buf;
+}
+
 // Draws the currently selected program to the screen
 void drawCurrentProgramInListView()
 {
   Program currentProgram = PROGRAMS[currentProgramIndex];
 
-  // Draw the program name on the top middle label
-  Screen::drawMiddleLabel(currentProgram.getName(), true);
+  // Draw the program progress string on the first middle line
+  char *progress = buildProgressString(currentProgramIndex + 1, NUM_PROGRAMS);
+  Screen::drawMiddleLabel(progress, -1);
+  free(progress);
+
+  // Draw the program name on the second middle label
+  Screen::drawMiddleLabel(currentProgram.getName(), 0);
 
   // Draw the other labels based on whether the program has variables
   bool hasVariables = currentProgram.getVariableCount() > 0;
@@ -70,7 +86,7 @@ void drawCurrentProgramInListView()
     }
     // Draw the program variables on the bottom middle label
     char *variablesString = currentProgram.getVariablesString();
-    Screen::drawMiddleLabel(variablesString, false);
+    Screen::drawMiddleLabel(variablesString, 1);
     free(variablesString);
   }
   else
@@ -82,24 +98,33 @@ void drawCurrentProgramInListView()
       showingBRLabel = false;
     }
     // Clear the bottom middle label since there are no variables to show
-    Screen::clearMiddleLabel(false);
+    Screen::clearMiddleLabel(1);
   }
 }
 
-// Draws the currently selected program variable to the bottom middle label on the screen
-void drawCurrentProgramVariableInEditorView()
+// Draws just the variable value string for the current selected program variable (more efficient for updates)
+void drawCurrentProgramVariableValueInEditorView()
 {
   Program currentProgram = PROGRAMS[currentProgramIndex];
   char *variableString = currentProgram.getVariableString(currentVariableIndex);
   if (variableString != nullptr)
   {
-    Screen::drawMiddleLabel(variableString, false);
+    Screen::drawMiddleLabel(variableString, 1);
     free(variableString);
   }
   else
   {
-    Screen::clearMiddleLabel(false);
+    Screen::clearMiddleLabel(1);
   }
+}
+
+// Draws the variable progress string for the current variable selection and then draws the value via another method
+void drawCurrentProgramVariableSelectionInEditorView()
+{
+  char *progress = buildProgressString(currentVariableIndex + 1, PROGRAMS[currentProgramIndex].getVariableCount());
+  Screen::drawMiddleLabel(progress, 0);
+  free(progress);
+  drawCurrentProgramVariableValueInEditorView();
 }
 
 /************************* VIEW NAVIGATION *********************/
@@ -127,9 +152,20 @@ void gotoProgramEditorView(bool resetVariableIndex = true)
   adjustmentTimer.start(ADJUSTMENT_HOLD_DELAY_MS);
   Screen::drawCornerLabel(TL, "Increase");
   Screen::drawCornerLabel(BL, "Decrease");
-  Screen::drawCornerLabel(TR, "Next");
-  Screen::drawCornerLabel(BR, "Back");
-  drawCurrentProgramVariableInEditorView();
+  Screen::drawCornerLabel(TR, "Back");
+  // Only show the next label if there are multiple variables to edit
+  if (PROGRAMS[currentProgramIndex].getVariableCount() > 1)
+  {
+    Screen::drawCornerLabel(BR, "Next");
+  }
+  else
+  {
+    Screen::clearCornerLabel(BR);
+  }
+  // Draw the top middle line
+  Screen::drawMiddleLabel("Editing Variable", -1);
+  // Draw the variable selection and value on the bottom middle line
+  drawCurrentProgramVariableSelectionInEditorView();
 }
 
 /********************** ERROR MESSAGE HANDLING ************************/
@@ -145,8 +181,9 @@ void showErrorMessage(const char *errorMessage)
   Screen::clearCornerLabel(BL);
   Screen::clearCornerLabel(BR);
   // Show the error message
-  Screen::drawMiddleLabel("ERROR", true);
-  Screen::drawMiddleLabel(errorMessage, false);
+  Screen::clearMiddleLabel(-1);
+  Screen::drawMiddleLabel("ERROR", 0);
+  Screen::drawMiddleLabel(errorMessage, 1);
 }
 
 // Hides the error message and restores the previous view
@@ -196,7 +233,7 @@ void startProgramWriteSequence()
   Screen::clearCornerLabel(BL);
   Screen::clearCornerLabel(BR);
   Screen::drawCornerLabel(TR, "Abort");
-  Screen::drawMiddleLabel("Writing...", false);
+  Screen::drawMiddleLabel("Writing...", 1);
   // Initialize the write timer with a quarter second start delay
   writeTimer.start(250);
   // Start the write sequence
@@ -408,20 +445,23 @@ void handleProgramEditorView()
       }
       // Set the new value and draw it on the screen
       PROGRAMS[currentProgramIndex].setVariableValue(currentVariableIndex, newValue);
-      drawCurrentProgramVariableInEditorView();
+      drawCurrentProgramVariableValueInEditorView();
     }
   }
-  // Handle "Next" button
+  // Handle "Back" button
   else if (Input::isPressingButton(TR))
   {
-    // Increment and wrap variable index and then draw it on the screen
-    currentVariableIndex = (currentVariableIndex + 1) % PROGRAMS[currentProgramIndex].getVariableCount();
-    drawCurrentProgramVariableInEditorView();
+    gotoProgramListView();
   }
-  // Handle "Back" button
+  // Handle "Next" button (will be disabled if there is only 1 variable for the program)
   else if (Input::isPressingButton(BR))
   {
-    gotoProgramListView();
+    if (PROGRAMS[currentProgramIndex].getVariableCount() > 1)
+    {
+      // Increment and wrap variable index and then draw it on the screen
+      currentVariableIndex = (currentVariableIndex + 1) % PROGRAMS[currentProgramIndex].getVariableCount();
+      drawCurrentProgramVariableSelectionInEditorView();
+    }
   }
 }
 
